@@ -15,7 +15,7 @@ import Daftar from './pages/SPMB/Daftar.jsx';
 import CekStatus from './pages/SPMB/CekStatus.jsx';
 import Achievement from './pages/Achievement.jsx';
 import Edukasi from './pages/Edukasi.jsx';
-import EdukasiDetail from './pages/edukasiDetail.jsx';
+import EdukasiDetail from './pages/EdukasiDetail.jsx';
 import Parenting from './pages/Parenting.jsx';
 import ParentingDetail from './pages/ParentingDetail.jsx';
 import Gallery from './pages/Gallery.jsx';
