@@ -1,0 +1,5 @@
+- [x] Move src/components/About.jsx to src/pages/About.jsx
+- [ ] Update import paths in App.jsx for Achievement, Edukasi, Parenting, Gallery, News, Contact to './' instead of './pages/'
+- [ ] Update import for About to './pages/About'
+- [ ] Remove imports and routes for Daftar and CekStatus in App.jsx
+- [ ] Test the build to ensure no errors
