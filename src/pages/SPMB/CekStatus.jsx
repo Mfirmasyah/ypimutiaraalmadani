@@ -8,10 +8,11 @@ const CekStatus = () => {
   const [statusData, setStatusData] = useState(null);
   const [error, setError] = useState('');
 
-  // Fungsi untuk fetch data dari Strapi
+  // ✅ DIPERBAIKI: URL Strapi Cloud langsung
+  const API_URL = 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
+
+  // ✅ DIPERBAIKI: Fetch data dari Strapi dengan logging
   const fetchStatusFromAPI = async (method, value) => {
-    const API_URL = import.meta.env.VITE_STRAPI_URL;
-    
     try {
       let url = '';
       
@@ -21,6 +22,8 @@ const CekStatus = () => {
         url = `${API_URL}/api/pendaftars?filters[email][$eq]=${value}`;
       }
 
+      console.log('🔍 Fetching from:', url);
+      
       const response = await fetch(url);
       
       if (!response.ok) {
@@ -28,20 +31,33 @@ const CekStatus = () => {
       }
 
       const result = await response.json();
+      console.log('📦 API Response:', result);
       
-      // Handle response structure
+      // ✅ SESUAI SCHEMA: Handle response structure Strapi v4
       return result.data && result.data.length > 0 ? result.data[0] : null;
     } catch (error) {
-      console.error('Error fetching status:', error);
+      console.error('❌ Error fetching status:', error);
       throw new Error('Tidak dapat terhubung ke server');
     }
   };
 
-  // Format data dari Strapi ke format frontend
+  // ✅ OPTIONAL: Tambah fungsi untuk format program display
+  const getProgramDisplay = (program) => {
+    const programMap = {
+      'TK': 'TK Islam Mutiara Al-Madani',
+      'SD': 'SD Islam Mutiara Al-Madani', 
+      'SMP': 'SMP Islam Mutiara Al-Madani'
+    };
+    return programMap[program] || program;
+  };
+
+  // ✅ DIPERBAIKI: Format data dari Strapi ke format frontend - SESUAI SCHEMA
   const formatStatusData = (apiData) => {
     if (!apiData) return null;
 
-    // Map status dari Strapi ke frontend
+    console.log('🔧 Formatting data:', apiData);
+
+    // ✅ SESUAI SCHEMA: Map status dari Strapi ke frontend
     const getFrontendStatus = (status) => {
       switch (status) {
         case 'menunggu': return 'menunggu';
@@ -131,23 +147,27 @@ const CekStatus = () => {
       }
     };
 
+    // ✅ SESUAI SCHEMA: Akses data dengan structure Strapi v4
+    const attributes = apiData.attributes || apiData;
+    
     return {
-      nomorPendaftaran: apiData.attributes.nomorPendaftaran,
-      nama: apiData.attributes.namaLengkap,
-      program: apiData.attributes.programPilihan,
-      tanggalDaftar: new Date(apiData.attributes.tanggalDaftar).toLocaleDateString('id-ID', {
+      nomorPendaftaran: attributes.nomorPendaftaran,
+      nama: attributes.namaLengkap,
+      program: attributes.programPilihan,
+      tanggalDaftar: new Date(attributes.tanggalDaftar).toLocaleDateString('id-ID', {
         day: 'numeric',
         month: 'long',
         year: 'numeric'
       }),
-      status: getFrontendStatus(apiData.attributes.status),
-      tahapSelanjutnya: getTahapSelanjutnya(apiData.attributes.status),
-      tanggalTahapSelanjutnya: getTanggalTahapSelanjutnya(apiData.attributes.status),
-      catatan: getCatatan(apiData.attributes.status),
-      detail: generateTimeline(apiData.attributes.status, apiData.attributes.tanggalDaftar)
+      status: getFrontendStatus(attributes.status),
+      tahapSelanjutnya: getTahapSelanjutnya(attributes.status),
+      tanggalTahapSelanjutnya: getTanggalTahapSelanjutnya(attributes.status),
+      catatan: getCatatan(attributes.status),
+      detail: generateTimeline(attributes.status, attributes.tanggalDaftar)
     };
   };
 
+  // ✅ DIPERBAIKI: Handle Search dengan logging
   const handleSearch = async (e) => {
     e.preventDefault();
     
@@ -170,16 +190,19 @@ const CekStatus = () => {
     setStatusData(null);
 
     try {
+      console.log('🔍 Searching for:', searchValue, 'method:', searchMethod);
+      
       const apiData = await fetchStatusFromAPI(searchMethod, searchValue);
       
       if (apiData) {
         const formattedData = formatStatusData(apiData);
+        console.log('✅ Formatted data:', formattedData);
         setStatusData(formattedData);
       } else {
         setError('Data pendaftaran tidak ditemukan. Pastikan nomor pendaftaran atau email sudah benar.');
       }
     } catch (error) {
-      console.error('Search error:', error);
+      console.error('❌ Search error:', error);
       setError(error.message || 'Terjadi kesalahan saat mencari data. Silakan coba lagi.');
     } finally {
       setIsLoading(false);
@@ -399,7 +422,8 @@ const CekStatus = () => {
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Program:</span>
-                        <span className="font-semibold">{statusData.program}</span>
+                        {/* ✅ DIPERBAIKI: Gunakan format program display */}
+                        <span className="font-semibold">{getProgramDisplay(statusData.program)}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-gray-600">Tanggal Daftar:</span>

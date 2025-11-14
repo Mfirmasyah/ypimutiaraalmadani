@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const Edukasi = () => {
   const [activeCategory, setActiveCategory] = useState("all");
@@ -7,9 +8,10 @@ const Edukasi = () => {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Konfigurasi
-  const STRAPI_URL = "http://localhost:1337";
+  const STRAPI_URL = "https://incredible-sparkle-f34960cd1e.strapiapp.com";
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80";
 
   // Background slides
@@ -73,7 +75,7 @@ const Edukasi = () => {
   // Sample data fallback
   const sampleArticles = [
     {
-      id: 1,
+      id: "1",
       title: "Metode Pembelajaran Abad 21 untuk Generasi Z",
       excerpt: "Bagaimana menyesuaikan metode pembelajaran dengan karakteristik generasi digital native dalam era teknologi modern.",
       category: "pedagogi",
@@ -85,7 +87,7 @@ const Edukasi = () => {
       slug: "metode-pembelajaran-abad-21"
     },
     {
-      id: 2,
+      id: "2",
       title: "Integrasi Teknologi dalam Pembelajaran Modern",
       excerpt: "Pemanfaatan tools digital dan platform interaktif untuk meningkatkan engagement siswa dalam proses belajar mengajar.",
       category: "teknologi",
@@ -97,7 +99,7 @@ const Edukasi = () => {
       slug: "integrasi-teknologi-pembelajaran"
     },
     {
-      id: 3,
+      id: "3",
       title: "Strategi Pengembangan Kurikulum Merdeka",
       excerpt: "Panduan implementasi kurikulum merdeka belajar untuk menciptakan lingkungan belajar yang lebih fleksibel.",
       category: "kurikulum",
@@ -109,7 +111,7 @@ const Edukasi = () => {
       slug: "strategi-kurikulum-merdeka"
     },
     {
-      id: 4,
+      id: "4",
       title: "Membangun Motivasi Belajar Siswa",
       excerpt: "Teknik-teknik efektif untuk meningkatkan motivasi intrinsik siswa dalam proses pembelajaran.",
       category: "motivasi",
@@ -121,7 +123,7 @@ const Edukasi = () => {
       slug: "membangun-motivasi-belajar"
     },
     {
-      id: 5,
+      id: "5",
       title: "Assesmen Autentik dalam Pembelajaran",
       excerpt: "Menerapkan teknik assesmen yang lebih bermakna dan relevan dengan kompetensi yang diharapkan.",
       category: "pedagogi",
@@ -133,7 +135,7 @@ const Edukasi = () => {
       slug: "assesmen-autentik-pembelajaran"
     },
     {
-      id: 6,
+      id: "6",
       title: "Digital Literacy untuk Guru Era Modern",
       excerpt: "Meningkatkan kompetensi literasi digital guru dalam menghadapi tantangan pendidikan di era digital.",
       category: "teknologi",
@@ -154,8 +156,8 @@ const Edukasi = () => {
     return () => clearInterval(interval);
   }, [backgroundSlides.length]);
 
-  // Format date
-  const formatDate = (dateString) => {
+  // Format date untuk display
+  const formatDateForDisplay = useCallback((dateString) => {
     if (!dateString) return 'Tanggal tidak tersedia';
     try {
       const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -163,19 +165,20 @@ const Edukasi = () => {
     } catch (error) {
       return 'Tanggal tidak valid';
     }
-  };
+  }, []);
 
   // Format views
-  const formatViews = (views) => {
+  const formatViews = useCallback((views) => {
     if (!views) return '0';
-    if (views >= 1000) {
-      return `${(views / 1000).toFixed(1)}K`;
+    const viewsNum = typeof views === 'number' ? views : parseInt(views) || 0;
+    if (viewsNum >= 1000) {
+      return `${(viewsNum / 1000).toFixed(1)}K`;
     }
-    return views.toString();
-  };
+    return viewsNum.toString();
+  }, []);
 
   // Get image URL from Strapi
-  const getImageUrl = (imageData) => {
+  const getImageUrl = useCallback((imageData) => {
     if (!imageData) return FALLBACK_IMAGE;
     
     if (typeof imageData === 'string') {
@@ -186,13 +189,23 @@ const Edukasi = () => {
     if (imageData.data?.url) return imageData.data.url;
     
     return FALLBACK_IMAGE;
-  };
+  }, [STRAPI_URL, FALLBACK_IMAGE]);
 
   // Optimize Cloudinary URL
-  const optimizeImage = (url, width = 600) => {
+  const optimizeImage = useCallback((url, width = 600) => {
     if (!url || !url.includes('res.cloudinary.com')) return url;
     return url.replace('/upload/', `/upload/w_${width},c_fill,f_auto,q_auto:good/`);
-  };
+  }, []);
+
+  // Handle article click
+  const handleArticleClick = useCallback((slug) => {
+    navigate(`/edukasi/${slug}`);
+  }, [navigate]);
+
+  // Handle image error
+  const handleImageError = useCallback((e) => {
+    e.target.src = FALLBACK_IMAGE;
+  }, [FALLBACK_IMAGE]);
 
   // Fetch articles from Strapi
   useEffect(() => {
@@ -201,6 +214,7 @@ const Edukasi = () => {
         setLoading(true);
         setError(null);
         
+        console.log('🔄 Fetching articles from Strapi...');
         const response = await fetch(`${STRAPI_URL}/api/edukasis?populate=*&sort[0]=createdAt:desc`);
         
         if (!response.ok) {
@@ -210,34 +224,36 @@ const Edukasi = () => {
         const data = await response.json();
         
         if (!data?.data || !Array.isArray(data.data)) {
-          throw new Error('Format data tidak valid');
+          throw new Error('Format data tidak valid dari server');
         }
+
+        console.log('✅ Data received:', data.data.length, 'articles');
 
         const transformedData = data.data.map((item) => {
           const attributes = item.attributes || item;
           
           return {
-            id: item.id,
+            id: item.id?.toString() || Math.random().toString(),
             title: attributes.title || attributes.judul || 'Judul Tidak Tersedia',
             excerpt: attributes.excerpt || attributes.deskripsi || 'Deskripsi tidak tersedia...',
-            category: attributes.category || attributes.kategori || 'umum',
+            category: (attributes.category || attributes.kategori || 'umum').toLowerCase(),
             author: attributes.author || attributes.penulis || 'Admin',
-            date: formatDate(attributes.date || attributes.tanggal || attributes.publishedAt || attributes.createdAt),
+            date: attributes.date || attributes.tanggal || attributes.publishedAt || attributes.createdAt,
             readTime: attributes.readTime || attributes.waktuBaca || '5 min read',
-            views: formatViews(attributes.views || attributes.dilihat || 0),
+            views: attributes.views || attributes.dilihat || 0,
             image: getImageUrl(attributes.image),
             slug: attributes.slug || `artikel-${item.id}`
           };
         });
 
         if (transformedData.length === 0) {
-          throw new Error('Tidak ada artikel tersedia');
+          throw new Error('Tidak ada artikel tersedia di server');
         }
         
         setArticles(transformedData);
         
       } catch (err) {
-        console.error('Error fetching articles:', err);
+        console.error('❌ Error fetching articles:', err);
         setError(err.message);
         setArticles(sampleArticles);
       } finally {
@@ -246,17 +262,14 @@ const Edukasi = () => {
     };
 
     fetchArticles();
-  }, [STRAPI_URL]);
+  }, [getImageUrl]);
 
-  // Filter articles
-  const filteredArticles = activeCategory === "all" 
-    ? articles 
-    : articles.filter(article => article.category === activeCategory);
-
-  // Handle image error
-  const handleImageError = (e) => {
-    e.target.src = FALLBACK_IMAGE;
-  };
+  // Filter articles dengan useMemo untuk optimasi
+  const filteredArticles = useMemo(() => {
+    return activeCategory === "all" 
+      ? articles 
+      : articles.filter(article => article.category === activeCategory);
+  }, [activeCategory, articles]);
 
   // Animation variants
   const fadeInUp = {
@@ -273,15 +286,49 @@ const Edukasi = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Memuat artikel edukasi...</p>
+  // Loading Component
+  const LoadingSpinner = () => (
+    <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600 text-lg">Memuat artikel edukasi...</p>
+      </div>
+    </div>
+  );
+
+  // Error Alert Component
+  const ErrorAlert = ({ error }) => (
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-8 rounded">
+      <div className="flex">
+        <div className="flex-shrink-0">⚠️</div>
+        <div className="ml-3">
+          <p className="text-yellow-700 text-sm">
+            {error} - Menampilkan data contoh untuk demonstrasi.
+          </p>
         </div>
       </div>
-    );
+    </div>
+  );
+
+  // Empty State Component
+  const EmptyState = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center py-20"
+    >
+      <div className="text-8xl mb-6">📝</div>
+      <h3 className="text-3xl font-bold text-gray-800 mb-4">
+        Belum ada artikel
+      </h3>
+      <p className="text-gray-600 text-lg max-w-md mx-auto">
+        Artikel untuk kategori ini sedang dalam proses penulisan oleh tim ahli kami.
+      </p>
+    </motion.div>
+  );
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
   return (
@@ -359,6 +406,7 @@ const Edukasi = () => {
                 className={`w-3 h-3 rounded-full transition-all duration-300 ${
                   currentSlide === index ? 'bg-yellow-400 scale-125' : 'bg-white/60'
                 }`}
+                aria-label={`Pergi ke slide ${index + 1}`}
               />
             ))}
           </div>
@@ -377,18 +425,7 @@ const Edukasi = () => {
       </section>
 
       {/* Error Alert */}
-      {error && (
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-8 rounded">
-          <div className="flex">
-            <div className="flex-shrink-0">⚠️</div>
-            <div className="ml-3">
-              <p className="text-yellow-700 text-sm">
-                {error} - Menampilkan data contoh untuk demonstrasi.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {error && <ErrorAlert error={error} />}
 
       {/* Main Content */}
       <section className="py-20">
@@ -446,7 +483,7 @@ const Edukasi = () => {
                   transition={{ delay: index * 0.1 }}
                   whileHover={{ y: -8 }}
                   className="bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden group cursor-pointer"
-                  onClick={() => window.location.href = `/edukasi/${article.slug}`}
+                  onClick={() => handleArticleClick(article.slug)}
                 >
                   {/* Article Image */}
                   <div className="h-48 relative overflow-hidden">
@@ -455,6 +492,8 @@ const Edukasi = () => {
                       alt={article.title}
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                       onError={handleImageError}
+                      loading="lazy"
+                      decoding="async"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     
@@ -467,14 +506,14 @@ const Edukasi = () => {
 
                     {/* View Count */}
                     <div className="absolute top-4 right-4 bg-black/50 text-white px-2 py-1 rounded-full text-sm backdrop-blur-sm">
-                      👁️ {article.views}
+                      👁️ {formatViews(article.views)}
                     </div>
                   </div>
 
                   {/* Article Content */}
                   <div className="p-6">
                     <div className="flex items-center text-sm text-gray-500 mb-4">
-                      <span>{article.date}</span>
+                      <span>{formatDateForDisplay(article.date)}</span>
                       <span className="mx-2">•</span>
                       <span>{article.readTime}</span>
                     </div>
@@ -499,6 +538,10 @@ const Edukasi = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         className="bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleArticleClick(article.slug);
+                        }}
                       >
                         Baca →
                       </motion.button>
@@ -510,21 +553,7 @@ const Edukasi = () => {
           </AnimatePresence>
 
           {/* Empty State */}
-          {filteredArticles.length === 0 && (
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center py-20"
-            >
-              <div className="text-8xl mb-6">📝</div>
-              <h3 className="text-3xl font-bold text-gray-800 mb-4">
-                Belum ada artikel
-              </h3>
-              <p className="text-gray-600 text-lg max-w-md mx-auto">
-                Artikel untuk kategori ini sedang dalam proses penulisan oleh tim ahli kami.
-              </p>
-            </motion.div>
-          )}
+          {!loading && !error && filteredArticles.length === 0 && <EmptyState />}
 
           {/* Load More Button */}
           {filteredArticles.length > 0 && (

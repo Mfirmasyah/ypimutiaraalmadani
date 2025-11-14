@@ -1,6 +1,46 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+
+// Error Boundary Component
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Error caught by boundary:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50">
+          <div className="text-center max-w-md mx-auto p-6">
+            <div className="text-6xl mb-4">😵</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">Terjadi Kesalahan</h2>
+            <p className="text-gray-600 mb-6">
+              Maaf, terjadi masalah saat memuat artikel. Silakan refresh halaman atau coba lagi nanti.
+            </p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors"
+            >
+              Refresh Halaman
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 const EdukasiDetail = () => {
   const { slug } = useParams();
@@ -11,7 +51,7 @@ const EdukasiDetail = () => {
   const [relatedArticles, setRelatedArticles] = useState([]);
 
   // Konfigurasi sama dengan Edukasi.jsx
-  const STRAPI_URL = "http://localhost:1337";
+  const STRAPI_URL = "https://incredible-sparkle-f34960cd1e.strapiapp.com";
   const FALLBACK_IMAGE = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80";
 
   // Kategori yang sama dengan Edukasi.jsx
@@ -56,7 +96,7 @@ const EdukasiDetail = () => {
   // Sample data fallback yang sama
   const sampleArticles = [
     {
-      id: 1,
+      id: "1",
       title: "Metode Pembelajaran Abad 21 untuk Generasi Z",
       excerpt: "Bagaimana menyesuaikan metode pembelajaran dengan karakteristik generasi digital native dalam era teknologi modern.",
       content: `
@@ -95,17 +135,49 @@ const EdukasiDetail = () => {
       `,
       category: "pedagogi",
       author: "Dr. Ahmad Fauzi, M.Pd",
-      date: "15 Maret 2024",
+      date: "2024-03-15",
       readTime: "5 min read",
       views: 1250,
       image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=800&q=80",
       slug: "metode-pembelajaran-abad-21"
     },
-    // ... tambahkan sample lainnya jika perlu
+    {
+      id: "2",
+      title: "Integrasi Teknologi dalam Pembelajaran Modern",
+      excerpt: "Pemanfaatan tools digital dan platform interaktif untuk meningkatkan engagement siswa dalam proses belajar mengajar.",
+      content: `
+        <h2>Pengenalan Teknologi Pendidikan</h2>
+        <p>Teknologi telah mengubah landscape pendidikan modern, menawarkan berbagai tools dan platform untuk meningkatkan pengalaman belajar.</p>
+        
+        <h2>Tools Digital yang Efektif</h2>
+        <ul>
+          <li>Learning Management Systems (LMS)</li>
+          <li>Aplikasi kolaborasi online</li>
+          <li>Platform video conference</li>
+          <li>Tools assessment digital</li>
+        </ul>
+        
+        <h2>Strategi Implementasi</h2>
+        <p>Langkah-langkah untuk mengintegrasikan teknologi:</p>
+        <ol>
+          <li>Identifikasi kebutuhan pembelajaran</li>
+          <li>Pilih tools yang sesuai</li>
+          <li>Training untuk guru dan siswa</li>
+          <li>Evaluasi dan perbaikan berkelanjutan</li>
+        </ol>
+      `,
+      category: "teknologi",
+      author: "Siti Aminah, M.Kom",
+      date: "2024-03-10",
+      readTime: "4 min read",
+      views: 890,
+      image: "https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80",
+      slug: "integrasi-teknologi-pembelajaran"
+    }
   ];
 
-  // Format date sama dengan Edukasi.jsx
-  const formatDate = (dateString) => {
+  // Format date untuk display dengan useCallback
+  const formatDateForDisplay = useCallback((dateString) => {
     if (!dateString) return 'Tanggal tidak tersedia';
     try {
       const options = { day: 'numeric', month: 'long', year: 'numeric' };
@@ -113,19 +185,20 @@ const EdukasiDetail = () => {
     } catch (error) {
       return 'Tanggal tidak valid';
     }
-  };
+  }, []);
 
-  // Format views sama dengan Edukasi.jsx
-  const formatViews = (views) => {
+  // Format views dengan useCallback
+  const formatViews = useCallback((views) => {
     if (!views) return '0';
-    if (views >= 1000) {
-      return `${(views / 1000).toFixed(1)}K`;
+    const viewsNum = typeof views === 'number' ? views : parseInt(views) || 0;
+    if (viewsNum >= 1000) {
+      return `${(viewsNum / 1000).toFixed(1)}K`;
     }
-    return views.toString();
-  };
+    return viewsNum.toString();
+  }, []);
 
-  // Get image URL sama dengan Edukasi.jsx
-  const getImageUrl = (imageData) => {
+  // Get image URL dengan useCallback
+  const getImageUrl = useCallback((imageData) => {
     if (!imageData) return FALLBACK_IMAGE;
     
     if (typeof imageData === 'string') {
@@ -136,13 +209,18 @@ const EdukasiDetail = () => {
     if (imageData.data?.url) return imageData.data.url;
     
     return FALLBACK_IMAGE;
-  };
+  }, [STRAPI_URL, FALLBACK_IMAGE]);
 
-  // Optimize image sama dengan Edukasi.jsx
-  const optimizeImage = (url, width = 800) => {
+  // Optimize image dengan useCallback
+  const optimizeImage = useCallback((url, width = 800) => {
     if (!url || !url.includes('res.cloudinary.com')) return url;
     return url.replace('/upload/', `/upload/w_${width},c_fill,f_auto,q_auto:good/`);
-  };
+  }, []);
+
+  // Handle image error dengan useCallback
+  const handleImageError = useCallback((e) => {
+    e.target.src = FALLBACK_IMAGE;
+  }, [FALLBACK_IMAGE]);
 
   // Fetch article detail dari Strapi
   useEffect(() => {
@@ -151,6 +229,7 @@ const EdukasiDetail = () => {
         setLoading(true);
         setError(null);
         
+        console.log('🔄 Fetching article detail from Strapi...');
         // Coba fetch dari Strapi
         const response = await fetch(
           `${STRAPI_URL}/api/edukasis?filters[slug][$eq]=${slug}&populate=*`
@@ -168,15 +247,15 @@ const EdukasiDetail = () => {
           
           // Format data sama persis dengan Edukasi.jsx
           const formattedArticle = {
-            id: item.id,
+            id: item.id?.toString() || Math.random().toString(),
             title: attributes.title || attributes.judul || 'Judul Tidak Tersedia',
             excerpt: attributes.excerpt || attributes.deskripsi || 'Deskripsi tidak tersedia...',
             content: attributes.content || attributes.isi || '<p>Konten artikel sedang dalam proses penulisan...</p>',
-            category: attributes.category || attributes.kategori || 'umum',
+            category: (attributes.category || attributes.kategori || 'umum').toLowerCase(),
             author: attributes.author || attributes.penulis || 'Admin',
-            date: formatDate(attributes.date || attributes.tanggal || attributes.publishedAt || attributes.createdAt),
+            date: attributes.date || attributes.tanggal || attributes.publishedAt || attributes.createdAt,
             readTime: attributes.readTime || attributes.waktuBaca || '5 min read',
-            views: formatViews(attributes.views || attributes.dilihat || 0),
+            views: attributes.views || attributes.dilihat || 0,
             image: getImageUrl(attributes.image),
             slug: attributes.slug || `artikel-${item.id}`
           };
@@ -184,26 +263,44 @@ const EdukasiDetail = () => {
           setArticle(formattedArticle);
           
           // Fetch related articles
-          const relatedResponse = await fetch(
-            `${STRAPI_URL}/api/edukasis?filters[category][$eq]=${formattedArticle.category}&filters[slug][$ne]=${slug}&populate=*&pagination[limit]=3&sort[0]=createdAt:desc`
-          );
-          
-          if (relatedResponse.ok) {
-            const relatedData = await relatedResponse.json();
-            if (relatedData?.data) {
-              const related = relatedData.data.map(relatedItem => {
-                const relatedAttr = relatedItem.attributes || relatedItem;
-                return {
-                  id: relatedItem.id,
-                  title: relatedAttr.title || relatedAttr.judul,
-                  excerpt: relatedAttr.excerpt || relatedAttr.deskripsi,
-                  image: getImageUrl(relatedAttr.image),
-                  slug: relatedAttr.slug,
-                  category: relatedAttr.category || relatedAttr.kategori
-                };
-              });
-              setRelatedArticles(related);
+          try {
+            const relatedResponse = await fetch(
+              `${STRAPI_URL}/api/edukasis?filters[category][$eq]=${formattedArticle.category}&filters[slug][$ne]=${slug}&populate=*&pagination[limit]=3&sort[0]=createdAt:desc`
+            );
+            
+            if (relatedResponse.ok) {
+              const relatedData = await relatedResponse.json();
+              if (relatedData?.data && Array.isArray(relatedData.data)) {
+                const related = relatedData.data.map(relatedItem => {
+                  const relatedAttr = relatedItem.attributes || relatedItem;
+                  return {
+                    id: relatedItem.id?.toString() || Math.random().toString(),
+                    title: relatedAttr.title || relatedAttr.judul || 'Judul Tidak Tersedia',
+                    excerpt: relatedAttr.excerpt || relatedAttr.deskripsi || 'Deskripsi tidak tersedia...',
+                    image: getImageUrl(relatedAttr.image),
+                    slug: relatedAttr.slug || `artikel-${relatedItem.id}`,
+                    category: (relatedAttr.category || relatedAttr.kategori || 'umum').toLowerCase()
+                  };
+                });
+                setRelatedArticles(related);
+              }
             }
+          } catch (relatedError) {
+            console.error('❌ Error fetching related articles:', relatedError);
+            // Fallback ke sample data untuk related articles
+            setRelatedArticles(
+              sampleArticles
+                .filter(art => art.id !== formattedArticle.id && art.category === formattedArticle.category)
+                .slice(0, 3)
+                .map(art => ({
+                  id: art.id,
+                  title: art.title,
+                  excerpt: art.excerpt,
+                  image: art.image,
+                  slug: art.slug,
+                  category: art.category
+                }))
+            );
           }
           
         } else {
@@ -212,7 +309,9 @@ const EdukasiDetail = () => {
           if (foundArticle) {
             setArticle(foundArticle);
             setRelatedArticles(
-              sampleArticles.filter(art => art.id !== foundArticle.id && art.category === foundArticle.category).slice(0, 3)
+              sampleArticles
+                .filter(art => art.id !== foundArticle.id && art.category === foundArticle.category)
+                .slice(0, 3)
             );
           } else {
             throw new Error('Artikel tidak ditemukan');
@@ -220,7 +319,7 @@ const EdukasiDetail = () => {
         }
         
       } catch (err) {
-        console.error('Error fetching article:', err);
+        console.error('❌ Error fetching article:', err);
         setError(err.message);
         
         // Fallback ke sample data
@@ -228,7 +327,9 @@ const EdukasiDetail = () => {
         if (foundArticle) {
           setArticle(foundArticle);
           setRelatedArticles(
-            sampleArticles.filter(art => art.id !== foundArticle.id && art.category === foundArticle.category).slice(0, 3)
+            sampleArticles
+              .filter(art => art.id !== foundArticle.id && art.category === foundArticle.category)
+              .slice(0, 3)
           );
         }
       } finally {
@@ -239,22 +340,34 @@ const EdukasiDetail = () => {
     if (slug) {
       fetchArticleDetail();
     }
-  }, [slug]);
+  }, [slug, getImageUrl]);
 
-  // Handle image error
-  const handleImageError = (e) => {
-    e.target.src = FALLBACK_IMAGE;
-  };
+  // Loading Component
+  const LoadingSpinner = () => (
+    <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-gray-600 text-lg">Memuat artikel...</p>
+      </div>
+    </div>
+  );
 
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-20 flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 text-lg">Memuat artikel...</p>
+  // Error Alert Component
+  const ErrorAlert = ({ error }) => (
+    <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-8 rounded">
+      <div className="flex">
+        <div className="flex-shrink-0">⚠️</div>
+        <div className="ml-3">
+          <p className="text-yellow-700 text-sm">
+            {error} - Menampilkan data contoh untuk demonstrasi.
+          </p>
         </div>
       </div>
-    );
+    </div>
+  );
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
   if (error && !article) {
@@ -327,7 +440,7 @@ const EdukasiDetail = () => {
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
-                  {article.date}
+                  {formatDateForDisplay(article.date)}
                 </span>
                 <span className="flex items-center">
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -340,13 +453,16 @@ const EdukasiDetail = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                   </svg>
-                  {article.views} views
+                  {formatViews(article.views)} views
                 </span>
               </div>
             </div>
           </motion.div>
         </div>
       </section>
+
+      {/* Error Alert */}
+      {error && <ErrorAlert error={error} />}
 
       {/* Article Content */}
       <section className="py-16 bg-white">
@@ -367,6 +483,8 @@ const EdukasiDetail = () => {
                     alt={article.title}
                     className="w-full h-64 md:h-96 object-cover"
                     onError={handleImageError}
+                    loading="lazy"
+                    decoding="async"
                   />
                 </div>
                 
@@ -424,6 +542,8 @@ const EdukasiDetail = () => {
                                 alt={relatedArticle.title}
                                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                 onError={handleImageError}
+                                loading="lazy"
+                                decoding="async"
                               />
                             </div>
                             <div className="flex-1 min-w-0">

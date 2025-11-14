@@ -353,8 +353,11 @@ const AchievementSection = () => {
   const [sdFilter, setSdFilter] = useState({ category: 'all', level: 'all' });
   const [smpFilter, setSmpFilter] = useState({ category: 'all', level: 'all' });
 
-  // Konfigurasi Strapi URL
-  const STRAPI_URL = "http://localhost:1337";
+  // PERBAIKAN: Update URL ke Strapi Cloud
+  const STRAPI_CONFIG = {
+    URL: 'https://incredible-sparkle-f34960cd1e.strapiapp.com',
+    CLOUDINARY_BASE_URL: 'https://res.cloudinary.com'
+  };
 
   // Data fallback untuk development
   const fallbackAchievements = [
@@ -435,23 +438,55 @@ const AchievementSection = () => {
     }
   ];
 
-  // Fetch achievements dari Strapi
+  // Fungsi untuk mendapatkan URL gambar - DIPERBARUI
+  const getImageUrl = (imageData) => {
+    if (!imageData) return 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
+    
+    let imageUrl = 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
+    
+    // Handle Strapi v4 structure
+    if (imageData.data?.attributes?.url) {
+      const url = imageData.data.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    // Alternative Strapi v4 structure
+    else if (imageData.attributes?.url) {
+      const url = imageData.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    // Fallback structure
+    else if (imageData.url) {
+      const url = imageData.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    
+    // Cleanup: Remove any duplicate base URLs
+    if (imageUrl.includes('http://localhost:1337http')) {
+      imageUrl = imageUrl.replace('http://localhost:1337', '');
+    }
+    if (imageUrl.includes('http://localhost:1337https')) {
+      imageUrl = imageUrl.replace('http://localhost:1337', '');
+    }
+    
+    return imageUrl;
+  };
+
+  // Fetch achievements dari Strapi Cloud - DIPERBARUI
   useEffect(() => {
     const fetchAchievements = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Coba fetch dari Strapi
+        // PERBAIKAN: Update endpoint URL ke Strapi Cloud
         const response = await fetch(
-          `${STRAPI_URL}/api/prestasis?populate=*&sort=date:desc`
+          `${STRAPI_CONFIG.URL}/api/prestasis?populate=*&sort=date:desc`
         );
         
         const data = await response.json();
         
         // Jika ada masalah, pakai fallback data
         if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
-          console.log('🔄 No valid data from Strapi, using fallback data');
           setAchievements(fallbackAchievements);
           return;
         }
@@ -466,19 +501,7 @@ const AchievementSection = () => {
               return null;
             }
             
-            let imageUrl = 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
-            if (itemData.image) {
-              const img = itemData.image;
-              if (img.data?.attributes?.url) {
-                imageUrl = `${STRAPI_URL}${img.data.attributes.url}`;
-              } else if (img.url) {
-                imageUrl = `${STRAPI_URL}${img.url}`;
-              }
-              
-              if (imageUrl.includes('http://localhost:1337http')) {
-                imageUrl = imageUrl.replace('http://localhost:1337', '');
-              }
-            }
+            const imageUrl = getImageUrl(itemData.image);
             
             let year = '2024';
             try {
@@ -511,7 +534,7 @@ const AchievementSection = () => {
         }
         
       } catch (err) {
-        console.error('❌ Fetch error:', err);
+        console.error('Fetch error:', err);
         setError(`Gagal memuat data prestasi: ${err.message}`);
         setAchievements(fallbackAchievements);
       } finally {
@@ -520,7 +543,7 @@ const AchievementSection = () => {
     };
 
     fetchAchievements();
-  }, [STRAPI_URL]);
+  }, []);
 
   // Pisahkan achievements berdasarkan jenjang
   const tkAchievements = achievements.filter(item => item.jenjang === 'tk');

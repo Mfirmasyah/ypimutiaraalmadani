@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
-// Config untuk Strapi dan Cloudinary - sama dengan Parenting.jsx
+// Config untuk Strapi Cloud
 const STRAPI_CONFIG = {
-  URL: import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337',
-  CLOUDINARY_BASE_URL: import.meta.env.VITE_CLOUDINARY_BASE_URL || 'https://res.cloudinary.com'
+  URL: 'https://incredible-sparkle-f34960cd1e.strapiapp.com',
+  CLOUDINARY_BASE_URL: 'https://res.cloudinary.com'
 };
 
 const ParentingDetail = () => {
@@ -16,7 +16,7 @@ const ParentingDetail = () => {
   const [error, setError] = useState(null);
   const [relatedArticles, setRelatedArticles] = useState([]);
 
-  // Sample data fallback yang sama dengan Parenting.jsx
+  // Sample data fallback
   const sampleArticles = [
     {
       id: 1,
@@ -82,10 +82,24 @@ const ParentingDetail = () => {
       slug: "panduan-pola-asuh-digital",
       isFeatured: true
     },
-    // ... tambahkan sample lainnya sesuai kebutuhan
+    {
+      id: 2,
+      title: "Membangun Komunikasi Efektif dengan Remaja",
+      excerpt: "Teknik komunikasi yang tepat untuk menjaga hubungan harmonis dengan anak remaja.",
+      content: "Konten lengkap artikel tentang komunikasi remaja...",
+      category: "komunikasi",
+      author: "Ahmad Fauzi, S.Psi",
+      date: "10 Maret 2024",
+      readTime: "4 min read",
+      image: "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80",
+      views: 890,
+      tags: ["komunikasi", "remaja", "keluarga", "psikologi"],
+      slug: "komunikasi-efektif-remaja",
+      isFeatured: false
+    }
   ];
 
-  // Kategori yang sama dengan Parenting.jsx
+  // Kategori
   const categories = [
     { id: 'all', name: 'Semua Artikel' },
     { id: 'pola-asuh', name: 'Pola Asuh' },
@@ -96,9 +110,14 @@ const ParentingDetail = () => {
     { id: 'pendidikan', name: 'Pendidikan' }
   ];
 
-  // Fungsi untuk membersihkan URL gambar dari duplikasi - sama dengan Parenting.jsx
+  // Fungsi untuk membersihkan URL gambar
   const cleanImageUrl = (url) => {
     if (!url) return 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
+    
+    // Handle Strapi Cloud URLs
+    if (url.startsWith('/') && !url.includes('strapiapp.com')) {
+      return `https://incredible-sparkle-f34960cd1e.strapiapp.com${url}`;
+    }
     
     // Remove duplicate localhost:1337
     if (url.includes('http://localhost:1337http')) {
@@ -116,7 +135,7 @@ const ParentingDetail = () => {
     return url;
   };
 
-  // Format date - sama dengan Parenting.jsx
+  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return 'Tanggal tidak tersedia';
     try {
@@ -127,7 +146,7 @@ const ParentingDetail = () => {
     }
   };
 
-  // Format views - sama dengan Parenting.jsx
+  // Format views
   const formatViews = (views) => {
     if (!views) return '0';
     if (views >= 1000) {
@@ -136,7 +155,7 @@ const ParentingDetail = () => {
     return views.toString();
   };
 
-  // Get image URL - sama dengan Parenting.jsx
+  // Get image URL untuk Strapi v4
   const getImageUrl = (imageData) => {
     if (!imageData) return 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
     
@@ -145,24 +164,20 @@ const ParentingDetail = () => {
     if (imageData) {
       const img = imageData;
       
-      // Method 1: Cloudinary URL from formats
-      if (img.data?.attributes?.formats?.medium?.url) {
-        const url = img.data.attributes.formats.medium.url;
-        imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
-      }
-      // Method 2: Direct Cloudinary URL
-      else if (img.data?.attributes?.url) {
+      // Strapi v4 structure
+      if (img.data?.attributes?.url) {
         const url = img.data.attributes.url;
         imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
       }
-      // Method 3: Simple URL field
+      // Alternative Strapi v4 structure
+      else if (img.attributes?.url) {
+        const url = img.attributes.url;
+        imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+      }
+      // Fallback structure
       else if (img.url) {
         const url = img.url;
-        imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${img.url}`;
-      }
-      // Method 4: String URL
-      else if (typeof img === 'string') {
-        imageUrl = img;
+        imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
       }
       
       // Cleanup: Remove any duplicate base URLs
@@ -172,20 +187,20 @@ const ParentingDetail = () => {
     return imageUrl;
   };
 
-  // Optimize image - sama dengan Parenting.jsx
+  // Optimize image
   const optimizeImage = (url, width = 800) => {
     if (!url || !url.includes('res.cloudinary.com')) return url;
     return url.replace('/upload/', `/upload/w_${width},c_fill,f_auto,q_auto:good/`);
   };
 
-  // Fetch article detail dari Strapi
+  // Fetch article detail dari Strapi Cloud
   useEffect(() => {
     const fetchArticleDetail = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        // Coba fetch dari Strapi
+        // Coba fetch dari Strapi Cloud
         const response = await fetch(
           `${STRAPI_CONFIG.URL}/api/parentings?filters[slug][$eq]=${slug}&populate=*`
         );
@@ -200,7 +215,7 @@ const ParentingDetail = () => {
           const item = data.data[0];
           const articleData = item.attributes || item;
           
-          // Format data sama persis dengan Parenting.jsx
+          // Format data
           const formattedArticle = {
             id: item.id,
             title: articleData.title,
@@ -212,7 +227,8 @@ const ParentingDetail = () => {
             readTime: articleData.readTime || '5 min read',
             image: getImageUrl(articleData.image),
             views: formatViews(articleData.views || 0),
-            tags: articleData.tags || [],
+            tags: Array.isArray(articleData.tags) ? articleData.tags : 
+                  (typeof articleData.tags === 'string' ? JSON.parse(articleData.tags) : []),
             slug: articleData.slug || `parenting-${item.id}`,
             isFeatured: articleData.isFeatured || false
           };
@@ -226,6 +242,7 @@ const ParentingDetail = () => {
           
           if (relatedResponse.ok) {
             const relatedData = await relatedResponse.json();
+            
             if (relatedData?.data) {
               const related = relatedData.data.map(relatedItem => {
                 const relatedAttr = relatedItem.attributes || relatedItem;
@@ -258,7 +275,6 @@ const ParentingDetail = () => {
         }
         
       } catch (err) {
-        console.error('Error fetching article:', err);
         setError(err.message);
         
         // Fallback ke sample data

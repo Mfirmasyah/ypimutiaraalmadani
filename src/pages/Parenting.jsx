@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from "framer-motion";
 
-// Config untuk Strapi dan Cloudinary - menggunakan import.meta.env untuk Vite
+// Config untuk Strapi Cloud
 const STRAPI_CONFIG = {
-  URL: import.meta.env.VITE_STRAPI_URL || 'http://localhost:1337',
-  CLOUDINARY_BASE_URL: import.meta.env.VITE_CLOUDINARY_BASE_URL || 'https://res.cloudinary.com'
+  URL: 'https://incredible-sparkle-f34960cd1e.strapiapp.com',
+  CLOUDINARY_BASE_URL: 'https://res.cloudinary.com'
 };
 
 const Parenting = () => {
@@ -14,10 +14,9 @@ const Parenting = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const [articles, setArticles] = useState([]);
-  const [filteredArticles, setFilteredArticles] = useState([]);
-  const [featuredArticles, setFeaturedArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   // Data hero slides statis
   const heroSlides = [
@@ -58,17 +57,17 @@ const Parenting = () => {
     return () => clearInterval(interval);
   }, [heroSlides.length]);
 
-  // Sample data fallback yang sesuai dengan schema
-  const getSampleArticles = () => {
+  // Sample data fallback dengan useCallback
+  const getSampleArticles = useCallback(() => {
     return [
       {
-        id: 1,
+        id: "1",
         title: "Panduan Pola Asuh Anak di Era Digital",
-        excerpt: "Tips dan strategi untuk orang tua dalam menghadapi tantangan parenting di era teknologi modern. Pelajari cara membatasi screen time dan memilih konten yang tepat untuk anak.",
+        excerpt: "Tips dan strategi untuk orang tua dalam menghadapi tantangan parenting di era teknologi modern.",
         content: "Konten lengkap artikel tentang pola asuh digital...",
         category: "pola-asuh",
         author: "Dr. Siti Aisyah, M.Psi",
-        date: "15 Maret 2024",
+        date: "2024-03-15",
         readTime: "5 min read",
         image: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80",
         views: 1250,
@@ -77,221 +76,171 @@ const Parenting = () => {
         isFeatured: true
       },
       {
-        id: 2,
+        id: "2",
         title: "Membangun Komunikasi Efektif dengan Remaja",
-        excerpt: "Teknik komunikasi yang tepat untuk menjaga hubungan harmonis dengan anak remaja. Pelajari cara mendengarkan aktif dan berbicara dengan bahasa yang dipahami remaja.",
+        excerpt: "Teknik komunikasi yang tepat untuk menjaga hubungan harmonis dengan anak remaja.",
         content: "Konten lengkap artikel tentang komunikasi remaja...",
         category: "komunikasi",
         author: "Ahmad Fauzi, S.Psi",
-        date: "10 Maret 2024",
+        date: "2024-03-10",
         readTime: "4 min read",
         image: "https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=600&q=80",
         views: 890,
         tags: ["komunikasi", "remaja", "keluarga", "psikologi"],
         slug: "komunikasi-efektif-remaja",
         isFeatured: false
-      },
-      {
-        id: 3,
-        title: "Pentingnya Gizi Seimbang untuk Tumbuh Kembang Anak",
-        excerpt: "Panduan praktis menyusun menu makanan bergizi untuk anak usia dini hingga remaja. Ketahui nutrisi penting yang dibutuhkan setiap tahap perkembangan.",
-        content: "Konten lengkap artikel tentang gizi anak...",
-        category: "kesehatan",
-        author: "dr. Rina Marlina",
-        date: "8 Maret 2024",
-        readTime: "6 min read",
-        image: "https://images.unsplash.com/photo-1549056572-75914d6d7e1a?auto=format&fit=crop&w=600&q=80",
-        views: 1560,
-        tags: ["gizi", "kesehatan", "tumbuh-kembang", "makanan"],
-        slug: "gizi-seimbang-anak",
-        isFeatured: true
-      },
-      {
-        id: 4,
-        title: "Membentuk Karakter Islami Sejak Dini",
-        excerpt: "Strategi menanamkan nilai-nilai Islami dan akhlak mulia pada anak sejak usia dini melalui keteladanan dan pembiasaan positif.",
-        content: "Konten lengkap artikel tentang karakter Islami...",
-        category: "karakter",
-        author: "Ust. Abdullah Alawi, M.Pd",
-        date: "5 Maret 2024",
-        readTime: "7 min read",
-        image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=600&q=80",
-        views: 2100,
-        tags: ["karakter", "islami", "akhlak", "pendidikan"],
-        slug: "karakter-islami-anak",
-        isFeatured: false
-      },
-      {
-        id: 5,
-        title: "Teknologi Ramah Anak untuk Pembelajaran",
-        excerpt: "Rekomendasi aplikasi dan platform edukasi yang aman dan bermanfaat untuk mendukung proses belajar anak di rumah.",
-        content: "Konten lengkap artikel tentang teknologi pendidikan...",
-        category: "teknologi",
-        author: "Tech Parenting Team",
-        date: "3 Maret 2024",
-        readTime: "5 min read",
-        image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=600&q=80",
-        views: 1340,
-        tags: ["teknologi", "edukasi", "aplikasi", "belajar"],
-        slug: "teknologi-ramah-anak",
-        isFeatured: false
-      },
-      {
-        id: 6,
-        title: "Pendidikan Seksualitas Sesuai Usia Anak",
-        excerpt: "Panduan mengajarkan pendidikan seksualitas yang sesuai dengan tahap perkembangan dan nilai-nilai Islam kepada anak.",
-        content: "Konten lengkap artikel tentang pendidikan seksualitas...",
-        category: "pendidikan",
-        author: "Psikolog Dian Kusuma, M.Psi",
-        date: "1 Maret 2024",
-        readTime: "8 min read",
-        image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&w=600&q=80",
-        views: 1780,
-        tags: ["pendidikan", "seksualitas", "perkembangan", "islami"],
-        slug: "pendidikan-seksualitas-anak",
-        isFeatured: true
       }
     ];
-  };
+  }, []);
 
-  // Fungsi untuk membersihkan URL gambar dari duplikasi
-  const cleanImageUrl = (url) => {
+  // Format date untuk display dengan useCallback
+  const formatDateForDisplay = useCallback((dateString) => {
+    if (!dateString) return 'Tanggal tidak tersedia';
+    try {
+      const options = { day: 'numeric', month: 'long', year: 'numeric' };
+      return new Date(dateString).toLocaleDateString('id-ID', options);
+    } catch (error) {
+      return 'Tanggal tidak valid';
+    }
+  }, []);
+
+  // Format views dengan useCallback
+  const formatViews = useCallback((views) => {
+    if (!views) return '0';
+    const viewsNum = typeof views === 'number' ? views : parseInt(views) || 0;
+    if (viewsNum >= 1000) {
+      return `${(viewsNum / 1000).toFixed(1)}K`;
+    }
+    return viewsNum.toString();
+  }, []);
+
+  // Fungsi untuk membersihkan URL gambar dengan useCallback
+  const cleanImageUrl = useCallback((url) => {
     if (!url) return 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
     
-    // Remove duplicate localhost:1337
+    // Handle relative URLs untuk Strapi Cloud
+    if (url.startsWith('/') && !url.includes('incredible-sparkle-f34960cd1e.strapiapp.com')) {
+      return `https://incredible-sparkle-f34960cd1e.strapiapp.com${url}`;
+    }
+    
+    // Remove duplicate base URLs
     if (url.includes('http://localhost:1337http')) {
       url = url.replace('http://localhost:1337', '');
     }
-    if (url.includes('http://localhost:1337https')) {
-      url = url.replace('http://localhost:1337', '');
-    }
-    
-    // Remove duplicate Cloudinary URLs
     if (url.includes('https://res.cloudinary.comhttps://res.cloudinary.com')) {
       url = url.replace('https://res.cloudinary.com', '');
     }
     
     return url;
-  };
+  }, []);
 
-  // Fetch articles dari Strapi
+  // Handle image error dengan useCallback
+  const handleImageError = useCallback((e) => {
+    e.target.src = 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
+    e.target.className = 'w-full h-full object-cover';
+  }, []);
+
+  // Handle article click dengan useCallback
+  const handleArticleClick = useCallback((slug) => {
+    navigate(`/parenting/${slug}`);
+  }, [navigate]);
+
+  // Fetch articles dari Strapi Cloud
   useEffect(() => {
     const fetchArticles = async () => {
       try {
         setLoading(true);
+        console.log('🔄 Fetching from Strapi Cloud...');
         
         const response = await fetch(
           `${STRAPI_CONFIG.URL}/api/parentings?populate=*&sort[0]=date:desc`
         );
         
-        const data = await response.json();
+        console.log('📊 Response status:', response.status);
         
-        // Jika ada masalah, langsung pakai sample data
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log('📦 Strapi response:', data);
+        
+        // Fallback ke sample data jika tidak ada data
         if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+          console.log('⚠️ No data from Strapi, using sample data');
           const sampleData = getSampleArticles();
           setArticles(sampleData);
-          setFilteredArticles(sampleData);
-          setFeaturedArticles(sampleData.filter(article => article.isFeatured).slice(0, 3));
           return;
         }
         
-        // Proses data
-        try {
-          const formattedArticles = data.data.map((item, index) => {
-            const articleData = item.attributes || item;
-            
-            // Basic validation
-            if (!articleData || !articleData.title) {
-              return null;
-            }
-            
-            // Image handling
-            let imageUrl = 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
-            
-            if (articleData.image) {
-              const img = articleData.image;
-              
-              // Method 1: Cloudinary URL from formats
-              if (img.data?.attributes?.formats?.medium?.url) {
-                const url = img.data.attributes.formats.medium.url;
-                imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
-              }
-              // Method 2: Direct Cloudinary URL
-              else if (img.data?.attributes?.url) {
-                const url = img.data.attributes.url;
-                imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
-              }
-              // Method 3: Simple URL field
-              else if (img.url) {
-                const url = img.url;
-                imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${img.url}`;
-              }
-              // Method 4: String URL
-              else if (typeof img === 'string') {
-                imageUrl = img;
-              }
-              
-              // Cleanup: Remove any duplicate base URLs
-              imageUrl = cleanImageUrl(imageUrl);
-            }
-            
-            // Date handling
-            let formattedDate = 'Tanggal tidak tersedia';
-            try {
-              const dateSource = articleData.date || articleData.publishedAt;
-              if (dateSource) {
-                formattedDate = new Date(dateSource).toLocaleDateString('id-ID', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                });
-              }
-            } catch (e) {
-              console.warn('Date formatting error:', e);
-            }
-            
-            return {
-              id: item.id || index,
-              title: articleData.title,
-              excerpt: articleData.excerpt || 'Deskripsi tidak tersedia...',
-              content: articleData.content || '',
-              category: articleData.category || 'pola-asuh',
-              author: articleData.author || 'Admin',
-              date: formattedDate,
-              readTime: articleData.readTime || '5 min read',
-              image: imageUrl,
-              views: articleData.views || 0,
-              tags: articleData.tags || [],
-              slug: articleData.slug || `parenting-${item.id || index}`,
-              isFeatured: articleData.isFeatured || false
-            };
-          }).filter(Boolean);
+        // Process data dari Strapi
+        const formattedArticles = data.data.map((item, index) => {
+          const articleData = item.attributes || item;
           
-          setArticles(formattedArticles);
-          setFilteredArticles(formattedArticles);
-          setFeaturedArticles(formattedArticles.filter(article => article.isFeatured).slice(0, 3));
+          // Basic validation
+          if (!articleData || !articleData.title) {
+            return null;
+          }
           
-        } catch (processError) {
-          throw new Error('Gagal memproses data dari Strapi');
-        }
+          // Image handling untuk Strapi v4
+          let imageUrl = 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
+          
+          if (articleData.image) {
+            const img = articleData.image;
+            console.log('🖼️ Image data:', img);
+            
+            // Strapi v4 structure
+            if (img.data?.attributes?.url) {
+              const url = img.data.attributes.url;
+              imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+            }
+            // Fallback structure
+            else if (img.url) {
+              const url = img.url;
+              imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+            }
+            
+            // Cleanup URL
+            imageUrl = cleanImageUrl(imageUrl);
+          }
+          
+          return {
+            id: item.id?.toString() || Math.random().toString(),
+            title: articleData.title,
+            excerpt: articleData.excerpt || 'Deskripsi tidak tersedia...',
+            content: articleData.content || '',
+            category: articleData.category || 'pola-asuh',
+            author: articleData.author || 'Admin',
+            date: articleData.date || articleData.publishedAt,
+            readTime: articleData.readTime || '5 min read',
+            image: imageUrl,
+            views: articleData.views || 0,
+            tags: articleData.tags || [],
+            slug: articleData.slug || `parenting-${item.id || index}`,
+            isFeatured: articleData.isFeatured || false
+          };
+        }).filter(Boolean);
+        
+        console.log('✅ Processed articles:', formattedArticles);
+        
+        setArticles(formattedArticles);
         
       } catch (err) {
+        console.error('❌ Fetch error:', err);
         setError(`Gagal memuat data artikel: ${err.message}`);
         // Fallback to sample data
         const sampleData = getSampleArticles();
         setArticles(sampleData);
-        setFilteredArticles(sampleData);
-        setFeaturedArticles(sampleData.filter(article => article.isFeatured).slice(0, 3));
       } finally {
         setLoading(false);
       }
     };
 
     fetchArticles();
-  }, []);
+  }, [getSampleArticles, cleanImageUrl]);
 
-  // Filter artikel berdasarkan kategori dan pencarian
-  useEffect(() => {
+  // Filter articles dengan useMemo untuk optimasi
+  const filteredArticles = useMemo(() => {
     let filtered = articles;
 
     if (activeCategory !== 'all') {
@@ -308,10 +257,11 @@ const Parenting = () => {
       );
     }
 
-    setFilteredArticles(filtered);
+    return filtered;
   }, [activeCategory, searchTerm, articles]);
 
-  const categories = [
+  // Categories dengan useMemo
+  const categories = useMemo(() => [
     { id: 'all', name: 'Semua Artikel', count: articles.length },
     { id: 'pola-asuh', name: 'Pola Asuh', count: articles.filter(a => a.category === 'pola-asuh').length },
     { id: 'teknologi', name: 'Teknologi', count: articles.filter(a => a.category === 'teknologi').length },
@@ -319,11 +269,21 @@ const Parenting = () => {
     { id: 'kesehatan', name: 'Kesehatan', count: articles.filter(a => a.category === 'kesehatan').length },
     { id: 'karakter', name: 'Karakter', count: articles.filter(a => a.category === 'karakter').length },
     { id: 'pendidikan', name: 'Pendidikan', count: articles.filter(a => a.category === 'pendidikan').length }
-  ];
+  ], [articles]);
 
-  const popularArticles = [...articles]
-    .sort((a, b) => b.views - a.views)
-    .slice(0, 3);
+  // Popular articles dengan useMemo
+  const popularArticles = useMemo(() => 
+    [...articles]
+      .sort((a, b) => b.views - a.views)
+      .slice(0, 3),
+    [articles]
+  );
+
+  // Featured articles dengan useMemo
+  const featuredArticles = useMemo(() => 
+    articles.filter(article => article.isFeatured).slice(0, 3),
+    [articles]
+  );
 
   // Data experts statis
   const experts = [
@@ -338,54 +298,46 @@ const Parenting = () => {
       specialization: "Spesialis Teknologi & Anak", 
       experience: "8+ tahun",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80"
-    },
-    {
-      name: "dr. Rina Marlina",
-      specialization: "Ahli Gizi Anak",
-      experience: "12+ tahun",
-      image: "https://images.unsplash.com/photo-1594824947933-d0501ba2fe65?auto=format&fit=crop&w=200&q=80"
-    },
-    {
-      name: "Dewi Sartika, M.Pd",
-      specialization: "Pendidikan Karakter",
-      experience: "10+ tahun",
-      image: "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?auto=format&fit=crop&w=200&q=80"
     }
   ];
 
-  // Loading state
+  // Loading Component
+  const LoadingSpinner = () => (
+    <div className="pt-20">
+      <section className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Memuat artikel parenting...</p>
+        </div>
+      </section>
+    </div>
+  );
+
+  // Error Component
+  const ErrorState = () => (
+    <div className="pt-20">
+      <section className="min-h-[80vh] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-4">😔</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Terjadi Kesalahan</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Coba Lagi
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+
   if (loading && articles.length === 0) {
-    return (
-      <div className="pt-20">
-        <section className="min-h-[80vh] flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Memuat artikel parenting...</p>
-          </div>
-        </section>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
-  // Error state
   if (error && articles.length === 0) {
-    return (
-      <div className="pt-20">
-        <section className="min-h-[80vh] flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">😔</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Terjadi Kesalahan</h2>
-            <p className="text-gray-600 mb-4">{error}</p>
-            <button 
-              onClick={() => window.location.reload()}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        </section>
-      </div>
-    );
+    return <ErrorState />;
   }
 
   return (
@@ -560,17 +512,17 @@ const Parenting = () => {
                           y: -8,
                           transition: { duration: 0.3 }
                         }}
-                        className="group bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100"
+                        className="group bg-white rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 cursor-pointer"
+                        onClick={() => handleArticleClick(article.slug)}
                       >
                         <div className="h-56 bg-gradient-to-br from-gray-200 to-gray-300 relative overflow-hidden">
                           <img 
                             src={article.image} 
                             alt={article.title}
                             className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
-                              e.target.className = 'w-full h-full object-cover';
-                            }}
+                            onError={handleImageError}
+                            loading="lazy"
+                            decoding="async"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
                           
@@ -583,7 +535,7 @@ const Parenting = () => {
                           
                           {/* View Count */}
                           <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
-                            👁️ {article.views || 0}
+                            👁️ {formatViews(article.views)}
                           </div>
                         </div>
                         
@@ -593,7 +545,7 @@ const Parenting = () => {
                               <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                               </svg>
-                              {article.date}
+                              {formatDateForDisplay(article.date)}
                             </span>
                             <span className="mx-3">•</span>
                             <span className="flex items-center">
@@ -623,15 +575,20 @@ const Parenting = () => {
                               </div>
                             </div>
                             
-                            <Link
-                              to={`/parenting/${article.slug || article.id}`}
+                            <motion.button
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
                               className="group/btn bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-blue-500/25 transition-all duration-300 flex items-center"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleArticleClick(article.slug);
+                              }}
                             >
                               Baca
                               <svg className="w-4 h-4 ml-2 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                               </svg>
-                            </Link>
+                            </motion.button>
                           </div>
 
                           {/* Tags */}
@@ -680,22 +637,6 @@ const Parenting = () => {
                 )}
               </motion.div>
             </section>
-
-            {/* Load More Button */}
-            {filteredArticles.length > 0 && (
-              <div className="text-center">
-                <motion.button
-                  whileHover={{ 
-                    scale: 1.05,
-                    boxShadow: "0 10px 30px rgba(59, 130, 246, 0.3)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-4 rounded-2xl font-semibold hover:shadow-xl transition-all duration-300"
-                >
-                  Muat Lebih Banyak Artikel
-                </motion.button>
-              </div>
-            )}
           </div>
 
           {/* Sidebar */}
@@ -722,6 +663,7 @@ const Parenting = () => {
                       transition={{ delay: index * 0.1 }}
                       whileHover={{ x: 8 }}
                       className="group bg-white rounded-2xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 cursor-pointer"
+                      onClick={() => handleArticleClick(article.slug)}
                     >
                       <div className="flex items-start space-x-4">
                         <div className="w-16 h-16 bg-gradient-to-br from-gray-300 to-gray-400 rounded-xl overflow-hidden flex-shrink-0 relative">
@@ -729,24 +671,17 @@ const Parenting = () => {
                             src={article.image} 
                             alt={article.title}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                            onError={(e) => {
-                              e.target.src = 'https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=600&q=80';
-                            }}
+                            onError={handleImageError}
+                            loading="lazy"
+                            decoding="async"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-gray-800 group-hover:text-blue-600 transition-colors line-clamp-2 mb-2 leading-tight">
                             {article.title}
                           </h3>
                           <div className="flex items-center text-xs text-gray-500">
-                            <span className="flex items-center">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
-                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd"/>
-                              </svg>
-                              {article.views} views
-                            </span>
+                            <span>👁️ {formatViews(article.views)} views</span>
                           </div>
                         </div>
                       </div>
@@ -755,170 +690,9 @@ const Parenting = () => {
                 </div>
               </motion.div>
             </section>
-
-            {/* Newsletter Subscription */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-3xl p-6 mb-8 border border-blue-200/50 shadow-lg"
-            >
-              <div className="text-center mb-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-bold text-gray-800 mb-2">Parenting Newsletter</h3>
-                <p className="text-gray-600 text-sm">
-                  Dapatkan artikel terbaru seputar parenting langsung di email Anda
-                </p>
-              </div>
-              <div className="space-y-3">
-                <input
-                  type="email"
-                  placeholder="Alamat email Anda"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
-                />
-                <motion.button 
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all duration-300"
-                >
-                  Berlangganan Sekarang
-                </motion.button>
-              </div>
-            </motion.section>
-
-            {/* Expert Tips */}
-            <motion.section
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="bg-white rounded-3xl shadow-lg p-6 border border-gray-100"
-            >
-              <div className="flex items-center mb-4">
-                <div className="w-2 h-6 bg-gradient-to-b from-orange-500 to-red-500 rounded-full mr-3"></div>
-                <h3 className="text-xl font-bold text-gray-800">Tips dari Ahli</h3>
-              </div>
-              <div className="space-y-4">
-                {[
-                  "Beri pujian pada usaha, bukan hasil",
-                  "Jadilah pendengar yang aktif untuk anak",
-                  "Konsisten dalam menerapkan aturan",
-                  "Berikan teladan yang baik",
-                  "Luangkan waktu berkualitas setiap hari"
-                ].map((tip, index) => (
-                  <motion.div 
-                    key={index} 
-                    className="flex items-start group cursor-pointer"
-                    whileHover={{ x: 5 }}
-                  >
-                    <span className="text-orange-500 mr-3 mt-1 text-lg">💡</span>
-                    <p className="text-gray-700 text-sm group-hover:text-gray-900 transition-colors">{tip}</p>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.section>
           </div>
         </div>
       </div>
-
-      {/* Expert Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-blue-50/30">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-          >
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-5xl font-bold text-gray-800 mb-4">
-                Tim Ahli Parenting Kami
-              </h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Dibimbing oleh profesional berpengalaman di bidang psikologi anak, pendidikan, dan perkembangan keluarga
-              </p>
-            </motion.div>
-            
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-              {experts.map((expert, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ 
-                    y: -15,
-                    transition: { duration: 0.3 }
-                  }}
-                  className="group bg-white rounded-3xl p-6 text-center shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100"
-                >
-                  <div className="relative mx-auto mb-6">
-                    <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-500">
-                      <img 
-                        src={expert.image} 
-                        alt={expert.name} 
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=200&q=80';
-                        }}
-                      />
-                    </div>
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
-                      <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
-                      </svg>
-                    </div>
-                  </div>
-                  <h3 className="font-bold text-gray-800 mb-2 text-lg">{expert.name}</h3>
-                  <p className="text-blue-600 text-sm font-semibold mb-3">{expert.specialization}</p>
-                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl py-2 px-3">
-                    <p className="text-gray-600 text-xs font-medium">Pengalaman: {expert.experience}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-700 text-white relative overflow-hidden">
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="max-w-3xl mx-auto"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-              Butuh Konsultasi Parenting?
-            </h2>
-            <p className="text-xl md:text-2xl mb-10 opacity-90 leading-relaxed">
-              Tim ahli kami siap membantu Anda dalam menghadapi tantangan parenting dengan pendekatan Islami
-            </p>
-            <div className="flex flex-wrap justify-center gap-6">
-              <Link
-                to="/contact"
-                className="bg-white text-blue-600 px-10 py-5 rounded-2xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 shadow-lg"
-              >
-                Hubungi Ahli
-              </Link>
-              <button className="border-2 border-white text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-white hover:text-blue-600 transition-all duration-300 backdrop-blur-sm">
-                Buat Janji Konsultasi
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
     </div>
   );
 };

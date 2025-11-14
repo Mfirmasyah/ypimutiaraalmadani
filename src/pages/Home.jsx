@@ -13,9 +13,29 @@ const useLatestData = () => {
     achievements: true
   });
 
-  const STRAPI_URL = "http://localhost:1337";
+  const STRAPI_URL = "https://incredible-sparkle-f34960cd1e.strapiapp.com";
 
-  // Fetch achievements dari Strapi - SAMA DENGAN ACHIEVEMENT.JSX
+  // Fungsi untuk membersihkan URL gambar
+  const cleanImageUrl = (url) => {
+    if (!url) return 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
+    
+    // Handle relative URLs untuk Strapi Cloud
+    if (url.startsWith('/') && !url.includes('incredible-sparkle-f34960cd1e.strapiapp.com')) {
+      return `https://incredible-sparkle-f34960cd1e.strapiapp.com${url}`;
+    }
+    
+    // Remove duplicate base URLs
+    if (url.includes('http://localhost:1337http')) {
+      url = url.replace('http://localhost:1337', '');
+    }
+    if (url.includes('https://incredible-sparkle-f34960cd1e.strapiapp.comhttps://')) {
+      url = url.replace('https://incredible-sparkle-f34960cd1e.strapiapp.com', '');
+    }
+    
+    return url;
+  };
+
+  // Fetch achievements dari Strapi - VERSI DIPERBAIKI
   const fetchAchievements = async () => {
     try {
       setLoading(prev => ({ ...prev, achievements: true }));
@@ -75,23 +95,27 @@ const useLatestData = () => {
         return;
       }
       
-      // Format data dari Strapi
+      // Format data dari Strapi - VERSI DIPERBAIKI
       const formattedAchievements = data.data.map((item) => {
         const itemData = item.attributes || item;
         
         let imageUrl = "https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80";
         if (itemData.image) {
           const img = itemData.image;
+          
+          // Strapi v4 structure - DIPERBAIKI
           if (img.data?.attributes?.url) {
-            imageUrl = `${STRAPI_URL}${img.data.attributes.url}`;
-          } else if (img.url) {
-            imageUrl = `${STRAPI_URL}${img.url}`;
+            const url = img.data.attributes.url;
+            imageUrl = url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
+          }
+          // Fallback structure
+          else if (img.url) {
+            const url = img.url;
+            imageUrl = url.startsWith('http') ? url : `${STRAPI_URL}${url}`;
           }
           
-          // Clean duplicate URLs
-          if (imageUrl.includes('http://localhost:1337http')) {
-            imageUrl = imageUrl.replace('http://localhost:1337', '');
-          }
+          // Cleanup URLs
+          imageUrl = cleanImageUrl(imageUrl);
         }
         
         let year = '2024';
@@ -376,7 +400,7 @@ const Home = () => {
   const [galleryLoading, setGalleryLoading] = useState(true);
   const [galleryError, setGalleryError] = useState(null);
 
-  const STRAPI_BASE_URL = 'http://localhost:1337';
+  const STRAPI_BASE_URL = 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
   const FALLBACK_IMAGE_URL = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80";
 
   // Gunakan custom hook yang sudah diperbarui
@@ -419,25 +443,51 @@ const Home = () => {
     return () => clearInterval(timer);
   }, [heroBackgrounds.length]);
 
+  // Fungsi getImageUrl yang DIPERBAIKI untuk Strapi v4
   const getImageUrl = (imageData) => {
     if (!imageData) {
       return FALLBACK_IMAGE_URL;
     }
 
+    // Handle Strapi v4 structure - DIPERBAIKI
+    if (imageData.data?.attributes?.url) {
+      const url = imageData.data.attributes.url;
+      return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+    }
+
     if (imageData.url) {
-      return imageData.url;
+      const url = imageData.url;
+      return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
     }
 
     if (imageData.formats) {
-      if (imageData.formats.large?.url) return imageData.formats.large.url;
-      if (imageData.formats.medium?.url) return imageData.formats.medium.url;
-      if (imageData.formats.small?.url) return imageData.formats.small.url;
-      if (imageData.formats.thumbnail?.url) return imageData.formats.thumbnail.url;
+      if (imageData.formats.large?.url) {
+        const url = imageData.formats.large.url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
+      if (imageData.formats.medium?.url) {
+        const url = imageData.formats.medium.url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
+      if (imageData.formats.small?.url) {
+        const url = imageData.formats.small.url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
+      if (imageData.formats.thumbnail?.url) {
+        const url = imageData.formats.thumbnail.url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
     }
 
     if (imageData.data) {
-      if (imageData.data.url) return imageData.data.url;
-      if (Array.isArray(imageData.data) && imageData.data[0]?.url) return imageData.data[0].url;
+      if (imageData.data.url) {
+        const url = imageData.data.url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
+      if (Array.isArray(imageData.data) && imageData.data[0]?.url) {
+        const url = imageData.data[0].url;
+        return url.startsWith('http') ? url : `${STRAPI_BASE_URL}${url}`;
+      }
     }
 
     return FALLBACK_IMAGE_URL;
@@ -465,81 +515,88 @@ const Home = () => {
     }
   };
 
-  // Fetch data gallery terbaru dari Strapi
-  useEffect(() => {
-    const fetchLatestGalleryStrapi = async () => {
-      try {
-        setGalleryLoading(true);
-        setGalleryError(null);
-        
-        console.log('🚀 Fetching latest gallery from Strapi...');
-        
-        const response = await fetch(
-          `${STRAPI_BASE_URL}/api/galleries?populate=*&sort[0]=createdAt:desc&pagination[pageSize]=6`
-        );
-        
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        console.log('📦 Latest Gallery API Response:', data);
-        
-        if (!data?.data || !Array.isArray(data.data)) {
-          throw new Error('Invalid data format from API');
-        }
-
-        const transformedData = data.data.map((item, index) => {
-          const itemData = item.attributes || item;
-          
-          const imageUrl = getImageUrl(itemData.image);
-          
-          return {
-            id: item.id || index,
-            judul: itemData.title || 'Judul Tidak Tersedia',
-            deskripsi: itemData.description || 'Deskripsi tidak tersedia...',
-            kategori: itemData.category || 'umum',
-            tanggal: formatDateStrapi(itemData.date || itemData.createdAt),
-            gambar: imageUrl,
-            dilihat: itemData.views || 0,
-            suka: itemData.likes || 0
-          };
-        });
-
-        setLatestGalleryStrapi(transformedData);
-        
-      } catch (error) {
-        console.error('❌ Error fetching latest gallery:', error);
-        setGalleryError(error.message);
-        
-        const sampleData = [
-          { 
-            id: 1, 
-            judul: "Tabligh Jumat Terbaru", 
-            kategori: "keagamaan", 
-            gambar: "https://res.cloudinary.com/djg7valvf/image/upload/v1761893878/Whats_App_Image_2025_10_23_at_08_07_06_86fcec10b1.jpg", 
-            tanggal: "15 Oktober 2025", 
-            deskripsi: "Tabligh Jumat minggu ini", 
-            dilihat: 245, 
-            suka: 89 
-          },
-          { 
-            id: 2, 
-            judul: "Kegiatan Belajar Terbaru", 
-            kategori: "akademik", 
-            gambar: FALLBACK_IMAGE_URL, 
-            tanggal: "18 Oktober 2025", 
-            deskripsi: "Proses pembelajaran terkini", 
-            dilihat: 312, 
-            suka: 124 
-          }
-        ];
-        setLatestGalleryStrapi(sampleData);
-      } finally {
-        setGalleryLoading(false);
+  // Fetch data gallery terbaru dari Strapi - VERSI DIPERBAIKI
+  const fetchLatestGalleryStrapi = async () => {
+    try {
+      setGalleryLoading(true);
+      setGalleryError(null);
+      
+      console.log('🚀 Fetching latest gallery from Strapi...');
+      
+      const response = await fetch(
+        `${STRAPI_BASE_URL}/api/galleries?populate=*&sort[0]=createdAt:desc&pagination[pageSize]=6`
+      );
+      
+      console.log('📦 Latest Gallery API Response status:', response.status);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
+      
+      const data = await response.json();
+      console.log('📦 Latest Gallery API Response data:', data);
+      
+      if (!data?.data || !Array.isArray(data.data)) {
+        console.warn('⚠️ No gallery data from Strapi');
+        setLatestGalleryStrapi([]);
+        return;
+      }
 
+      const transformedData = data.data.map((item, index) => {
+        const itemData = item.attributes || item;
+        
+        // Gunakan fungsi getImageUrl yang sudah diperbaiki
+        const imageUrl = getImageUrl(itemData.image);
+        
+        return {
+          id: item.id || index,
+          judul: itemData.title || 'Judul Tidak Tersedia',
+          deskripsi: itemData.description || 'Deskripsi tidak tersedia...',
+          kategori: itemData.category || 'umum',
+          tanggal: formatDateStrapi(itemData.date || itemData.createdAt),
+          gambar: imageUrl,
+          dilihat: itemData.views || 0,
+          suka: itemData.likes || 0
+        };
+      });
+
+      console.log('✅ Processed gallery data:', transformedData);
+      setLatestGalleryStrapi(transformedData);
+      
+    } catch (error) {
+      console.error('❌ Error fetching latest gallery:', error);
+      setGalleryError(error.message);
+      
+      // Fallback data
+      const sampleData = [
+        { 
+          id: 1, 
+          judul: "Tabligh Jumat Terbaru", 
+          kategori: "keagamaan", 
+          gambar: "https://res.cloudinary.com/djg7valvf/image/upload/v1761893878/Whats_App_Image_2025_10_23_at_08_07_06_86fcec10b1.jpg", 
+          tanggal: "15 Oktober 2025", 
+          deskripsi: "Tabligh Jumat minggu ini", 
+          dilihat: 245, 
+          suka: 89 
+        },
+        { 
+          id: 2, 
+          judul: "Kegiatan Belajar Terbaru", 
+          kategori: "akademik", 
+          gambar: FALLBACK_IMAGE_URL, 
+          tanggal: "18 Oktober 2025", 
+          deskripsi: "Proses pembelajaran terkini", 
+          dilihat: 312, 
+          suka: 124 
+        }
+      ];
+      setLatestGalleryStrapi(sampleData);
+    } finally {
+      setGalleryLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchLatestGalleryStrapi();
   }, []);
 
@@ -848,7 +905,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Prestasi Section - VERSI BARU DENGAN DATA DARI STRAPI */}
+      {/* Prestasi Section - VERSI DIPERBAIKI DENGAN DATA DARI STRAPI */}
       <section ref={achievementRef} className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <motion.div
@@ -897,7 +954,7 @@ const Home = () => {
                     >
                       <div className="relative overflow-hidden">
                         <img
-                          src={achievement.image || "https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80"}
+                          src={achievement.image}
                           alt={achievement.title}
                           className="h-56 w-full object-cover group-hover:scale-110 transition-transform duration-500"
                           onError={(e) => {
@@ -995,7 +1052,7 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Gallery Section (tetap sama) */}
+      {/* Gallery Section - VERSI DIPERBAIKI */}
       <section ref={galleryRef} className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
@@ -1027,7 +1084,7 @@ const Home = () => {
               <div className="text-center py-12">
                 <p className="text-gray-600">Belum ada foto di gallery.</p>
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={fetchLatestGalleryStrapi}
                   className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Refresh Data
@@ -1111,7 +1168,13 @@ const Home = () => {
             {galleryError && (
               <div className="bg-yellow-100 border border-yellow-400 p-4 rounded-lg text-center mt-4 max-w-2xl mx-auto">
                 <div className="font-bold text-yellow-800">⚠️ Perhatian</div>
-                <div className="text-yellow-700">Menggunakan data sample: {galleryError}</div>
+                <div className="text-yellow-700 mb-2">Terjadi kesalahan: {galleryError}</div>
+                <button
+                  onClick={fetchLatestGalleryStrapi}
+                  className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+                >
+                  Coba Lagi
+                </button>
               </div>
             )}
           </motion.div>

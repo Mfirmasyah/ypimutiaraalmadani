@@ -41,6 +41,9 @@ const Daftar = () => {
     suratSehat: null
   });
 
+  // ✅ DIPERBAIKI: URL Strapi Cloud langsung
+  const API_URL = 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
+
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     
@@ -92,11 +95,11 @@ const Daftar = () => {
     }
   };
 
-  // Simpan data ke Strapi
+  // ✅ DIPERBAIKI: Simpan data ke Strapi dengan error handling yang lebih baik
   const saveToStrapi = async (pendaftarData) => {
-    const API_URL = import.meta.env.VITE_STRAPI_URL;
-
     try {
+      console.log('🚀 Saving to Strapi:', pendaftarData);
+      
       const response = await fetch(`${API_URL}/api/pendaftars`, {
         method: 'POST',
         headers: {
@@ -105,35 +108,113 @@ const Daftar = () => {
         body: JSON.stringify({ data: pendaftarData }),
       });
 
+      console.log('📊 Strapi response status:', response.status);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error?.message || 'Failed to save data');
+        const errorText = await response.text();
+        console.error('❌ Strapi error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log('✅ Strapi save successful:', result);
+      return result;
+
     } catch (error) {
-      console.error('Error saving to Strapi:', error);
-      throw error;
+      console.error('❌ Error saving to Strapi:', error);
+      throw new Error(`Gagal menyimpan data: ${error.message}`);
     }
   };
 
+  // ✅ DIPERBAIKI: Validasi enum values sesuai schema
+  const validateEnumValues = () => {
+    const enumChecks = {
+      jenisKelamin: ['Laki-laki', 'Perempuan'].includes(formData.jenisKelamin),
+      agama: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Buddha', 'Konghucu'].includes(formData.agama),
+      programPilihan: ['TK', 'SD', 'SMP'].includes(formData.programPilihan),
+      jalurPendaftaran: ['reguler', 'prestasi', 'afirmasi', 'perpindahan'].includes(formData.jalurPendaftaran)
+    };
+
+    const invalidFields = Object.entries(enumChecks)
+      .filter(([_, isValid]) => !isValid)
+      .map(([field]) => field);
+
+    if (invalidFields.length > 0) {
+      throw new Error(`Nilai tidak valid untuk field: ${invalidFields.join(', ')}`);
+    }
+  };
+
+  // ✅ DIPERBAIKI: Validasi field lengths sesuai schema
+  const validateFieldLengths = () => {
+    const lengthChecks = {
+      namaLengkap: formData.namaLengkap.length <= 100,
+      tempatLahir: formData.tempatLahir.length <= 50,
+      alamat: formData.alamat.length <= 500,
+      telepon: formData.telepon.length <= 15,
+      email: formData.email.length <= 100,
+      namaAyah: formData.namaAyah.length <= 100,
+      pekerjaanAyah: formData.pekerjaanAyah.length <= 50,
+      teleponAyah: formData.teleponAyah.length <= 15,
+      namaIbu: formData.namaIbu.length <= 100,
+      pekerjaanIbu: formData.pekerjaanIbu.length <= 50,
+      teleponIbu: formData.teleponIbu.length <= 15,
+      alamatOrtu: formData.alamatOrtu.length <= 500,
+      sekolahAsal: formData.sekolahAsal.length <= 100,
+      alamatSekolah: formData.alamatSekolah ? formData.alamatSekolah.length <= 500 : true
+    };
+
+    const tooLongFields = Object.entries(lengthChecks)
+      .filter(([_, isValid]) => !isValid)
+      .map(([field]) => field);
+
+    if (tooLongFields.length > 0) {
+      throw new Error(`Field terlalu panjang: ${tooLongFields.join(', ')}`);
+    }
+  };
+
+  // ✅ DIPERBAIKI: Handle submit dengan flow yang diperbaiki
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      console.log('🚀 Starting form submission...');
+
+      // Validasi field required
+      const requiredFields = [
+        'namaLengkap', 'jenisKelamin', 'tempatLahir', 'tanggalLahir', 
+        'agama', 'alamat', 'telepon', 'email', 'namaAyah', 'pekerjaanAyah',
+        'teleponAyah', 'namaIbu', 'pekerjaanIbu', 'teleponIbu', 'alamatOrtu',
+        'sekolahAsal', 'tahunLulus', 'nilaiRataRata', 'programPilihan', 'jalurPendaftaran'
+      ];
+
+      for (const field of requiredFields) {
+        if (!formData[field]) {
+          throw new Error(`Field ${field} harus diisi`);
+        }
+      }
+
+      // Validasi enum values dan field lengths
+      validateEnumValues();
+      validateFieldLengths();
+
       // Upload semua file ke Cloudinary
       const uploadPromises = [];
       const documentFields = ['foto', 'aktaKelahiran', 'kartuKeluarga', 'rapor', 'suratSehat'];
 
+      console.log('📤 Uploading documents...');
+      
       for (const field of documentFields) {
         if (formData[field]) {
           uploadPromises.push(
             uploadToCloudinary(formData[field])
-              .then(url => ({ field, url }))
+              .then(url => {
+                console.log(`✅ ${field} uploaded:`, url);
+                return { field, url };
+              })
               .catch(error => {
-                console.error(`Error uploading ${field}:`, error);
-                throw new Error(`Gagal mengupload ${field}`);
+                console.error(`❌ Error uploading ${field}:`, error);
+                throw new Error(`Gagal mengupload ${field}: ${error.message}`);
               })
           );
         }
@@ -148,12 +229,16 @@ const Daftar = () => {
         documents[result.field] = result.url;
       });
 
-      // Siapkan data untuk Strapi - SESUAI SCHEMA
+      console.log('📝 Preparing data for Strapi...');
+
+      // ✅ DIPERBAIKI: Siapkan data untuk Strapi - SESUAI SCHEMA
+      const tempNomor = `SPMB-TEMP-${Date.now()}`;
       const pendaftarData = {
+        nomorPendaftaran: tempNomor, // Temporary dulu
         namaLengkap: formData.namaLengkap,
         jenisKelamin: formData.jenisKelamin,
         tempatLahir: formData.tempatLahir,
-        tanggalLahir: formData.tanggalLahir,
+        tanggalLahir: formData.tanggalLahir, // Schema: date (YYYY-MM-DD)
         agama: formData.agama,
         alamat: formData.alamat,
         telepon: formData.telepon,
@@ -166,32 +251,46 @@ const Daftar = () => {
         teleponIbu: formData.teleponIbu,
         alamatOrtu: formData.alamatOrtu,
         sekolahAsal: formData.sekolahAsal,
-        alamatSekolah: formData.alamatSekolah,
+        alamatSekolah: formData.alamatSekolah || '', // Bisa kosong
         tahunLulus: parseInt(formData.tahunLulus),
         nilaiRataRata: parseFloat(formData.nilaiRataRata),
         programPilihan: formData.programPilihan,
         jalurPendaftaran: formData.jalurPendaftaran,
         status: 'menunggu',
-        tanggalDaftar: new Date().toISOString(),
-        ...documents
+        tanggalDaftar: new Date().toISOString(), // Schema: datetime (ISO format)
+        foto: documents.foto || null,
+        aktaKelahiran: documents.aktaKelahiran || null,
+        kartuKeluarga: documents.kartuKeluarga || null,
+        rapor: documents.rapor || null,
+        suratSehat: documents.suratSehat || null
       };
 
-      // Simpan ke Strapi
+      console.log('💾 Saving to Strapi...');
+
+      // Simpan ke Strapi dengan nomor temporary
       const result = await saveToStrapi(pendaftarData);
 
-      // Generate nomor pendaftaran
+      // ✅ DIPERBAIKI: Generate nomor pendaftaran final berdasarkan ID dari Strapi
       const nomorPendaftaran = `SPMB-${new Date().getFullYear()}${String(result.data.id).padStart(4, '0')}`;
 
-      // Update nomor pendaftaran di Strapi
-      await fetch(`${import.meta.env.VITE_STRAPI_URL}/api/pendaftars/${result.data.id}`, {
+      console.log('🔄 Updating registration number:', nomorPendaftaran);
+
+      // Update dengan nomor final
+      const updateResponse = await fetch(`${API_URL}/api/pendaftars/${result.data.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          data: { nomorPendaftaran: nomorPendaftaran } 
+          data: { 
+            nomorPendaftaran: nomorPendaftaran 
+          } 
         }),
       });
+
+      if (!updateResponse.ok) {
+        throw new Error('Gagal update nomor pendaftaran');
+      }
 
       // Simpan data ke localStorage untuk konfirmasi
       localStorage.setItem('lastRegistration', JSON.stringify({
@@ -200,6 +299,8 @@ const Daftar = () => {
         program: formData.programPilihan,
         tanggal: new Date().toLocaleDateString('id-ID')
       }));
+
+      console.log('✅ Registration successful!');
 
       // Redirect ke halaman konfirmasi
       navigate('/spmb/konfirmasi', { 
@@ -211,7 +312,7 @@ const Daftar = () => {
       });
 
     } catch (error) {
-      console.error('Error during submission:', error);
+      console.error('❌ Error during submission:', error);
       alert(`Terjadi kesalahan: ${error.message}. Silakan coba lagi.`);
     } finally {
       setLoading(false);
@@ -337,6 +438,7 @@ const Daftar = () => {
                       value={formData.tempatLahir}
                       onChange={handleInputChange}
                       required
+                      maxLength={50}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Kota tempat lahir"
                     />
@@ -387,6 +489,7 @@ const Daftar = () => {
                       value={formData.telepon}
                       onChange={handleInputChange}
                       required
+                      maxLength={15}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="08xxxxxxxxxx"
                     />
@@ -403,6 +506,7 @@ const Daftar = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    maxLength={100}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                     placeholder="email@contoh.com"
                   />
@@ -418,6 +522,7 @@ const Daftar = () => {
                     onChange={handleInputChange}
                     required
                     rows="3"
+                    maxLength={500}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Alamat lengkap tempat tinggal"
                   ></textarea>
@@ -441,6 +546,7 @@ const Daftar = () => {
                       value={formData.namaAyah}
                       onChange={handleInputChange}
                       required
+                      maxLength={100}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Nama lengkap ayah"
                     />
@@ -456,6 +562,7 @@ const Daftar = () => {
                       value={formData.pekerjaanAyah}
                       onChange={handleInputChange}
                       required
+                      maxLength={50}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Pekerjaan ayah"
                     />
@@ -471,6 +578,7 @@ const Daftar = () => {
                       value={formData.teleponAyah}
                       onChange={handleInputChange}
                       required
+                      maxLength={15}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="08xxxxxxxxxx"
                     />
@@ -486,6 +594,7 @@ const Daftar = () => {
                       value={formData.namaIbu}
                       onChange={handleInputChange}
                       required
+                      maxLength={100}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Nama lengkap ibu"
                     />
@@ -501,6 +610,7 @@ const Daftar = () => {
                       value={formData.pekerjaanIbu}
                       onChange={handleInputChange}
                       required
+                      maxLength={50}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Pekerjaan ibu"
                     />
@@ -516,6 +626,7 @@ const Daftar = () => {
                       value={formData.teleponIbu}
                       onChange={handleInputChange}
                       required
+                      maxLength={15}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="08xxxxxxxxxx"
                     />
@@ -532,6 +643,7 @@ const Daftar = () => {
                     onChange={handleInputChange}
                     required
                     rows="3"
+                    maxLength={500}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Alamat lengkap orang tua"
                   ></textarea>
@@ -555,6 +667,7 @@ const Daftar = () => {
                       value={formData.sekolahAsal}
                       onChange={handleInputChange}
                       required
+                      maxLength={100}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                       placeholder="Nama sekolah sebelumnya"
                     />
@@ -643,6 +756,7 @@ const Daftar = () => {
                     value={formData.alamatSekolah}
                     onChange={handleInputChange}
                     rows="2"
+                    maxLength={500}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
                     placeholder="Alamat lengkap sekolah asal"
                   ></textarea>

@@ -11,7 +11,7 @@ const NewsDetail = () => {
   const [error, setError] = useState(null);
   const [relatedNews, setRelatedNews] = useState([]);
 
-  const STRAPI_URL = "http://localhost:1337";
+  const STRAPI_URL = "https://incredible-sparkle-f34960cd1e.strapiapp.com";
 
   // Format tanggal
   const formatDate = (dateString) => {

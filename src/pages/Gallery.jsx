@@ -10,7 +10,12 @@ const Gallery = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const STRAPI_BASE_URL = 'http://localhost:1337'; 
+  // Config untuk Strapi Cloud
+  const STRAPI_CONFIG = {
+    URL: 'https://incredible-sparkle-f34960cd1e.strapiapp.com',
+    CLOUDINARY_BASE_URL: 'https://res.cloudinary.com'
+  };
+
   const FALLBACK_IMAGE_URL = "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=600&q=80";
 
   const backgroundImages = [
@@ -28,10 +33,28 @@ const Gallery = () => {
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
 
+  // Fungsi getImageUrl untuk Strapi v4
   const getImageUrl = (imageData) => {
     if (!imageData) return FALLBACK_IMAGE_URL;
-    if (imageData.url) return imageData.url;
     
+    let imageUrl = FALLBACK_IMAGE_URL;
+    
+    // Handle Strapi v4 structure
+    if (imageData.data?.attributes?.url) {
+      const url = imageData.data.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    // Alternative Strapi v4 structure
+    else if (imageData.attributes?.url) {
+      const url = imageData.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    // Fallback untuk struktur lama
+    else if (imageData.url) {
+      imageUrl = imageData.url;
+    }
+    
+    // Handle Cloudinary URLs
     if (imageData.formats) {
       if (imageData.formats.large?.url) return imageData.formats.large.url;
       if (imageData.formats.medium?.url) return imageData.formats.medium.url;
@@ -39,16 +62,25 @@ const Gallery = () => {
       if (imageData.formats.thumbnail?.url) return imageData.formats.thumbnail.url;
     }
 
-    if (imageData.data) {
-      if (imageData.data.url) return imageData.data.url;
-      if (Array.isArray(imageData.data) && imageData.data[0]?.url) return imageData.data[0].url;
+    // Clean URL dari duplikasi
+    if (imageUrl.includes('http://localhost:1337http')) {
+      imageUrl = imageUrl.replace('http://localhost:1337', '');
+    }
+    if (imageUrl.includes('http://localhost:1337https')) {
+      imageUrl = imageUrl.replace('http://localhost:1337', '');
     }
 
-    return FALLBACK_IMAGE_URL;
+    return imageUrl;
   };
 
   const getOptimizedImageUrl = (url) => {
     if (!url || typeof url !== 'string') return FALLBACK_IMAGE_URL;
+    
+    // Optimize Cloudinary images
+    if (url.includes('res.cloudinary.com')) {
+      return url.replace('/upload/', '/upload/w_800,c_fill,f_auto,q_auto:good/');
+    }
+    
     return url;
   };
 
@@ -62,13 +94,15 @@ const Gallery = () => {
     }
   };
 
+  // Fetch data dari Strapi Cloud
   useEffect(() => {
     const fetchGalleryData = async () => {
       try {
         setLoading(true);
         setError(null);
         
-        const response = await fetch(`${STRAPI_BASE_URL}/api/galleries?populate=*`);
+        // Update endpoint URL
+        const response = await fetch(`${STRAPI_CONFIG.URL}/api/galleries?populate=*`);
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
@@ -84,13 +118,13 @@ const Gallery = () => {
           
           return {
             id: item.id || index,
-            judul: itemData.title || 'Judul Tidak Tersedia',
-            deskripsi: itemData.description || 'Deskripsi tidak tersedia...',
-            kategori: itemData.category || 'umum',
-            tanggal: formatDate(itemData.date || itemData.createdAt),
+            judul: itemData.title || itemData.judul || 'Judul Tidak Tersedia',
+            deskripsi: itemData.description || itemData.deskripsi || 'Deskripsi tidak tersedia...',
+            kategori: itemData.category || itemData.kategori || 'umum',
+            tanggal: formatDate(itemData.date || itemData.createdAt || itemData.tanggal),
             gambar: imageUrl,
-            dilihat: itemData.views || 0,
-            suka: itemData.likes || 0
+            dilihat: itemData.views || itemData.dilihat || 0,
+            suka: itemData.likes || itemData.suka || 0
           };
         });
         
@@ -234,7 +268,6 @@ const Gallery = () => {
                     alt={item.judul}
                     className="w-full h-full object-cover"
                     onError={handleImageError}
-                    crossOrigin="anonymous" // Tambahkan ini
                   />
                   <div className="absolute top-3 left-3">
                     <span className="bg-white/90 text-gray-800 px-3 py-1 rounded-full text-sm font-semibold">
@@ -286,7 +319,6 @@ const Gallery = () => {
                   src={getOptimizedImageUrl(selectedImage.gambar)}
                   alt={selectedImage.judul}
                   className="w-full h-96 object-cover"
-                  crossOrigin="anonymous" // Tambahkan ini juga
                 />
                 <button
                   onClick={() => setSelectedImage(null)}

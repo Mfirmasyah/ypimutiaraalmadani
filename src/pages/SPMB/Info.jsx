@@ -17,7 +17,7 @@ const Info = () => {
   const [error, setError] = useState(null);
 
   // ✅ FIX: Gunakan URL langsung untuk development
-  const API_URL = 'http://localhost:1337';
+  const API_URL = 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
 
   // Multiple background images untuk PPDB
   const backgroundImages = [
@@ -104,14 +104,15 @@ const Info = () => {
     }
   };
 
-  // Fetch Timeline Data dari Strapi - FLEXIBLE STRUCTURE
+  // Fetch Timeline Data dari Strapi - VERSI DIPERBAIKI
   useEffect(() => {
     const fetchTimelineData = async () => {
       try {
         setLoading(true);
         
-        console.log('Fetching timeline from:', `${API_URL}/api/timelines?sort=order:asc`);
+        console.log('🚀 Fetching timeline from:', `${API_URL}/api/timelines?sort=order:asc`);
         
+        // ✅ DIPERBAIKI: Hapus populate=* karena tidak ada gambar
         const response = await fetch(`${API_URL}/api/timelines?sort=order:asc`);
         
         if (!response.ok) {
@@ -119,7 +120,7 @@ const Info = () => {
         }
         
         const data = await response.json();
-        console.log('Full API response:', data);
+        console.log('📦 Full API response:', data);
         
         // Cek berbagai kemungkinan struktur data
         let items = [];
@@ -127,32 +128,37 @@ const Info = () => {
         if (data.data && Array.isArray(data.data)) {
           // Struktur: { data: [...] }
           items = data.data;
-          console.log('Using data.data structure');
+          console.log('✅ Using data.data structure');
         } else if (Array.isArray(data)) {
           // Struktur: [...]
           items = data;
-          console.log('Using direct array structure');
+          console.log('✅ Using direct array structure');
         } else {
           throw new Error('Unknown data structure from API');
         }
         
-        console.log('Items found:', items);
+        console.log('📋 Items found:', items.length);
         
-        // Transform data dengan berbagai kemungkinan field names
+        // Transform data - VERSI DIPERBAIKI
         const transformedData = items.map((item, index) => {
           // Cek berbagai kemungkinan struktur item
           const attributes = item.attributes || item.data || item;
           
-          console.log('Processing item:', item);
-          console.log('Attributes:', attributes);
+          console.log('🔧 Processing item:', attributes);
           
-          // Extract fields dengan berbagai kemungkinan nama field
-          const order = attributes.order || attributes.sort_order || attributes.sequence || (index + 1);
-          const phase = attributes.phase || attributes.title || attributes.name || `Phase ${index + 1}`;
-          const dateRange = attributes.dateRange || attributes.date_period || attributes.date || attributes.tanggal || 'Tanggal belum ditentukan';
-          const description = attributes.description || attributes.desc || attributes.deskripsi || 'Deskripsi belum tersedia';
+          // ✅ DIPERBAIKI: Field names sesuai schema - sederhanakan
+          const order = attributes.order || (index + 1);
+          const phase = attributes.phase || `Phase ${index + 1}`;
+          const dateRange = attributes.dateRange || 'Tanggal belum ditentukan';
+          const description = attributes.description || 'Deskripsi belum tersedia';
           
-          // ✅ Hitung status berdasarkan tanggal, bukan hanya order
+          // ✅ DIPERBAIKI: Validasi required fields
+          if (!attributes.phase || !attributes.dateRange) {
+            console.warn('❌ Timeline item missing required fields:', attributes);
+            return null;
+          }
+          
+          // Hitung status berdasarkan tanggal, bukan hanya order
           const status = calculateTimelineStatus(dateRange);
           const isActive = status === 'active';
           const isCompleted = status === 'completed';
@@ -169,16 +175,17 @@ const Info = () => {
             isCompleted: isCompleted,
             progress: progress
           };
-        });
+        }).filter(Boolean); // ✅ DIPERBAIKI: Filter out null items
         
         // Sort by order
         transformedData.sort((a, b) => a.order - b.order);
         
+        console.log('✅ Processed timeline data:', transformedData);
         setTimelineData(transformedData);
         setError(null);
         
       } catch (err) {
-        console.error('Error fetching timeline data:', err);
+        console.error('❌ Error fetching timeline data:', err);
         setError(err.message);
         setTimelineData(getFallbackTimelineData());
       } finally {
@@ -348,6 +355,75 @@ const Info = () => {
       ))}
     </div>
   );
+
+  // Refresh timeline data
+  const handleRefreshTimeline = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      console.log('🔄 Refreshing timeline data...');
+      
+      const response = await fetch(`${API_URL}/api/timelines?sort=order:asc`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      let items = [];
+      if (data.data && Array.isArray(data.data)) {
+        items = data.data;
+      } else if (Array.isArray(data)) {
+        items = data;
+      } else {
+        throw new Error('Unknown data structure from API');
+      }
+      
+      const transformedData = items.map((item, index) => {
+        const attributes = item.attributes || item.data || item;
+        
+        const order = attributes.order || (index + 1);
+        const phase = attributes.phase || `Phase ${index + 1}`;
+        const dateRange = attributes.dateRange || 'Tanggal belum ditentukan';
+        const description = attributes.description || 'Deskripsi belum tersedia';
+        
+        if (!attributes.phase || !attributes.dateRange) {
+          console.warn('❌ Timeline item missing required fields:', attributes);
+          return null;
+        }
+        
+        const status = calculateTimelineStatus(dateRange);
+        const isActive = status === 'active';
+        const isCompleted = status === 'completed';
+        const progress = calculateProgress(dateRange);
+        
+        return {
+          id: item.id || `timeline-${index + 1}`,
+          date: dateRange,
+          phase: phase,
+          description: description,
+          status: status,
+          order: order,
+          isActive: isActive,
+          isCompleted: isCompleted,
+          progress: progress
+        };
+      }).filter(Boolean);
+      
+      transformedData.sort((a, b) => a.order - b.order);
+      
+      console.log('✅ Timeline data refreshed successfully');
+      setTimelineData(transformedData);
+      
+    } catch (err) {
+      console.error('❌ Error refreshing timeline:', err);
+      setError(`Gagal refresh data: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="pt-20">
@@ -711,7 +787,7 @@ const Info = () => {
         </div>
       </section>
 
-      {/* Enhanced Timeline Section - FLEXIBLE DATA STRUCTURE */}
+      {/* Enhanced Timeline Section - VERSI DIPERBAIKI */}
       <section 
         ref={timelineRef}
         className="py-20 bg-gray-50"
@@ -740,8 +816,14 @@ const Info = () => {
               <TimelineSkeleton />
             ) : error ? (
               <div className="text-center py-12">
-                <div className="text-yellow-600 text-lg mb-4">⚠️ Menggunakan data offline</div>
-                <p className="text-gray-600">Timeline akan diperbarui ketika koneksi tersedia</p>
+                <div className="text-yellow-600 text-lg mb-4">⚠️ {error}</div>
+                <p className="text-gray-600 mb-4">Timeline akan diperbarui ketika koneksi tersedia</p>
+                <button
+                  onClick={handleRefreshTimeline}
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  🔄 Coba Lagi
+                </button>
               </div>
             ) : (
               <div className="max-w-4xl mx-auto">
