@@ -86,24 +86,24 @@ const Contact = () => {
     {
       name: 'Instagram',
       icon: '📷',
-      username: '@mutiaramadani',
-      url: 'https://instagram.com/mutiaramadani',
+      username: '@ypimutiaramadani',
+      url: 'https://www.instagram.com/ypimutiaraalmadani/?next=%2F',
       gradient: 'from-pink-500 to-purple-600',
       description: 'Follow untuk update kegiatan harian dan prestasi siswa'
     },
     {
       name: 'TikTok',
       icon: '🎵',
-      username: '@mutiaramadani',
-      url: 'https://tiktok.com/@mutiaramadani',
+      username: '@ypimutiaramadani',
+      url: 'https://www.tiktok.com/@ypimutiaraalmadani_',
       gradient: 'from-gray-800 to-black',
       description: 'Tonton video kreatif dan aktivitas seru di sekolah'
     },
     {
       name: 'YouTube',
       icon: '📺',
-      username: 'Mutiara Al-Madani',
-      url: 'https://youtube.com/c/MutiaraAlMadani',
+      username: 'YPI-Mutiara Al-Madani',
+      url: 'https://www.youtube.com/@YPIMutiaraAlMadani-d9w',
       gradient: 'from-red-500 to-red-700',
       description: 'Subscribe untuk video edukasi dan dokumentasi kegiatan'
     }

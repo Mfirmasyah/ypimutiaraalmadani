@@ -6,9 +6,9 @@ export const SCHOOL_INFO = {
   email: "ypimutiaraalmadani@gmail.com",
   whatsapp: "+6285368262156",
   socialMedia: {
-    Tiktok: "",
-    instagram: "",
-    youtube: "",
+    Tiktok: "https://www.tiktok.com/@ypimutiaraalmadani_",
+    instagram: "https://www.instagram.com/ypimutiaraalmadani/?next=%2F",
+    youtube: "https://www.youtube.com/@YPIMutiaraAlMadani-d9w",
   }
 };
 

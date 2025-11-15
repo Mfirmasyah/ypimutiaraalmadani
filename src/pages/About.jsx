@@ -436,7 +436,7 @@ const About = () => {
   };
 
   // Komponen Image dengan Lazy Loading
-  const LazyImage = ({ src, alt, className, onError }) => (
+  const LazyImage = ({ src, alt, className, onError, ...props }) => (
     <img
       src={src}
       alt={alt}
@@ -444,6 +444,7 @@ const About = () => {
       onError={onError}
       loading="lazy"
       decoding="async"
+      {...props}
     />
   );
 
@@ -989,7 +990,7 @@ const About = () => {
         )}
       </AnimatePresence>
 
-      {/* Struktur Organisasi & Staff Pengajar */}
+      {/* Struktur Organisasi & Staff Pengajar - PERBAIKAN DI SINI */}
       <section ref={organizationRef} className="py-20 bg-white">
         <div className="container mx-auto px-4">
           <motion.div
@@ -1036,7 +1037,7 @@ const About = () => {
               ))}
             </motion.div>
 
-            {/* Organizational Structure Grid */}
+            {/* Organizational Structure Grid - PERBAIKAN UTAMA */}
             <AnimatePresence mode="sync">
               <motion.div
                 key={activeDepartment}
@@ -1057,14 +1058,25 @@ const About = () => {
                       className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 p-6 group"
                     >
                       <div className="flex flex-col items-center text-center">
-                        {/* Foto Profil */}
+                        {/* Foto Profil - PERBAIKAN DI SINI */}
                         <div className="relative mb-4">
-                          <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-lg group-hover:scale-110 transition-transform duration-300">
+                          <div className={`
+                            rounded-xl overflow-hidden border-4 border-white shadow-lg 
+                            group-hover:scale-105 transition-transform duration-300
+                            ${activeDepartment === "pengurus" 
+                              ? "w-32 h-40"  // Ukuran lebih besar untuk pengurus yayasan
+                              : "w-28 h-36"  // Ukuran normal untuk guru
+                            }
+                          `}>
                             <LazyImage
                               src={person.photo}
                               alt={person.name}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover object-center"
                               onError={handleImageError}
+                              style={{ 
+                                objectFit: 'cover',
+                                objectPosition: 'center center'
+                              }}
                             />
                           </div>
                           {/* Badge Department */}
@@ -1085,12 +1097,12 @@ const About = () => {
 
                         {/* Informasi */}
                         <div className="flex-1 w-full">
-                          <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-2">
+                          <h3 className="text-lg font-bold text-gray-800 mb-2 group-hover:text-blue-600 transition-colors line-clamp-2 leading-tight">
                             {person.name}
                           </h3>
 
                           <div className="mb-3">
-                            <span className="inline-block bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold">
+                            <span className="inline-block bg-gradient-to-r from-blue-50 to-purple-50 text-gray-700 px-3 py-1 rounded-full text-sm font-semibold border border-blue-100">
                               {person.position}
                             </span>
                           </div>
