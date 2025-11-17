@@ -16,7 +16,7 @@ const SMP = () => {
   // Multiple background images untuk SMP
   const backgroundImages = [
     '/assets/background1.jpg',
-    '/assets/aktivitas1.png',
+    '/assets/smpb.jpeg',
     '/assets/drumband1.png',
     '/assets/pramuka5.png',
     '/assets/yasinan_pagi.png'
