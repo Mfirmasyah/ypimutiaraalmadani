@@ -9,6 +9,7 @@ const TK = () => {
   const [visionRef, visionVisible] = useScrollAnimation(0.2);
   const [programRef, programVisible] = useScrollAnimation(0.2);
   const [activitiesRef, activitiesVisible] = useScrollAnimation(0.2);
+  const [conceptRef, conceptVisible] = useScrollAnimation(0.1); // Ubah threshold menjadi 0.1
   
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -191,7 +192,7 @@ const TK = () => {
             initial="initial"
             whileInView="animate"
             variants={staggerContainer}
-            viewport={{ once: true }}
+            viewport={{ once: true, amount: 0.1 }} // Tambahkan amount: 0.1
             className="max-w-4xl mx-auto"
           >
             <motion.div
@@ -297,6 +298,335 @@ const TK = () => {
         </div>
       </section>
 
+      {/* Program & Konsep Pembelajaran Section - MODIFIED */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }} // Gunakan whileInView dengan threshold rendah
+            variants={staggerContainer}
+          >
+            {/* Section Header */}
+            <motion.div 
+              variants={fadeInUp}
+              className="text-center mb-16"
+            >
+              <div className="inline-block bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 border border-blue-200 mb-4">
+                <span className="text-blue-600 font-semibold text-lg">📘 PROGRAM & KONSEP PEMBELAJARAN</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Konsep Pembelajaran TK Mutiara Al-Madani
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-indigo-500 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Pendekatan holistik yang mengintegrasikan nilai islami dengan perkembangan anak usia dini
+              </p>
+            </motion.div>
+
+            {/* Konsep Dasar Pembelajaran */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white rounded-3xl p-8 shadow-2xl border border-blue-200 mb-12"
+            >
+              <div className="flex items-center mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-4">
+                  🎯
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800">Konsep Dasar Pembelajaran</h3>
+              </div>
+              
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: "Berbasis Karakter Islami",
+                    description: "Penanaman akhlak mulia sejak dini dengan pembiasaan adab sehari-hari",
+                    features: ["Salam, doa, antri, berbagi", "Menghormati guru & orang tua", "Pengenalan ibadah dasar", "Wudhu, shalat dhuha", "Hafalan doa harian dan surat pendek"],
+                    icon: "🕌",
+                    color: "from-green-400 to-green-500"
+                  },
+                  {
+                    title: "Pembelajaran Tematik Integratif",
+                    description: "Tema pembelajaran berdasarkan dunia anak yang menggabungkan berbagai aspek",
+                    features: ["Tema: diriku, keluargaku, alam", "Integrasi bahasa, sosial-emosional", "Pengembangan motorik dan seni", "Nilai agama dalam setiap tema"],
+                    icon: "🎨",
+                    color: "from-blue-400 to-blue-500"
+                  },
+                  {
+                    title: "Bermain Sambil Belajar",
+                    description: "Belajar melalui permainan aktif, eksplorasi, dan pengalaman langsung",
+                    features: ["Play-based learning", "Fokus pada keceriaan & kreativitas", "Kolaborasi & rasa ingin tahu", "Pengalaman langsung"],
+                    icon: "🎪",
+                    color: "from-yellow-400 to-yellow-500"
+                  },
+                  {
+                    title: "Saintifik & Kreativitas",
+                    description: "Mengembangkan kemampuan observasi dan problem solving",
+                    features: ["Mengamati, menanya, mencoba", "Menalar dan menyimpulkan", "Membangun percaya diri", "Problem solving sederhana"],
+                    icon: "🔬",
+                    color: "from-purple-400 to-purple-500"
+                  },
+                  {
+                    title: "Lingkungan Berkarakter",
+                    description: "Ruang belajar ramah anak dengan guru sebagai fasilitator",
+                    features: ["Lingkungan aman & nyaman", "Ruang penuh warna & literasi", "Guru sebagai teladan", "Fasilitator penuh kasih"],
+                    icon: "🏫",
+                    color: "from-pink-400 to-pink-500"
+                  }
+                ].map((konsep, index) => (
+                  <div key={index} className="group bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-6 border border-blue-100 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
+                    <div className={`w-16 h-16 bg-gradient-to-br ${konsep.color} rounded-2xl flex items-center justify-center text-white text-2xl mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                      {konsep.icon}
+                    </div>
+                    <h4 className="text-xl font-bold text-gray-800 mb-3">{konsep.title}</h4>
+                    <p className="text-gray-600 mb-4 text-sm leading-relaxed">{konsep.description}</p>
+                    <div className="space-y-2">
+                      {konsep.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center text-sm">
+                          <div className="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></div>
+                          <span className="text-gray-700">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Bidang Pengembangan Utama */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white rounded-3xl p-8 shadow-2xl border border-indigo-200 mb-12"
+            >
+              <div className="flex items-center mb-8">
+                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-4">
+                  🌟
+                </div>
+                <h3 className="text-3xl font-bold text-gray-800">Bidang Pengembangan Utama</h3>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: "Nilai Agama & Moral Islami",
+                    activities: ["Hafalan surat pendek pilihan", "Doa harian", "Adab pada guru, teman, keluarga", "Storytelling kisah nabi"],
+                    icon: "📿",
+                    color: "from-emerald-400 to-emerald-500"
+                  },
+                  {
+                    title: "Fisik-Motorik",
+                    activities: ["Senam ceria", "Permainan outdoor", "Outbound mini", "Fine motor activities"],
+                    icon: "🏃",
+                    color: "from-blue-400 to-blue-500"
+                  },
+                  {
+                    title: "Bahasa & Literasi",
+                    activities: ["Baca gambar & fonik dasar", "Kosakata islami", "Bercerita & mendengarkan", "Huruf hijaiyah"],
+                    icon: "📚",
+                    color: "from-orange-400 to-orange-500"
+                  },
+                  {
+                    title: "Kognitif: Matematika & Sains",
+                    activities: ["Pengenalan angka & pola", "Eksperimen sains sederhana", "Observasi lingkungan", "Bentuk & ukuran"],
+                    icon: "🔢",
+                    color: "from-purple-400 to-purple-500"
+                  },
+                  {
+                    title: "Sosial-Emosional",
+                    activities: ["Disiplin & mandiri", "Berbagi & kerja sama", "Tanggung jawab kecil", "Merapikan alat"],
+                    icon: "👥",
+                    color: "from-pink-400 to-pink-500"
+                  },
+                  {
+                    title: "Seni & Kreativitas",
+                    activities: ["Melukis & kolase", "Menyanyi islami", "Nasyid anak", "Tari & gerak kreatif"],
+                    icon: "🎭",
+                    color: "from-red-400 to-red-500"
+                  }
+                ].map((bidang, index) => (
+                  <div key={index} className="group bg-gradient-to-br from-gray-50 to-indigo-50 rounded-2xl p-6 border border-indigo-100 hover:border-indigo-300 transition-all duration-300">
+                    <div className="flex items-center mb-4">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${bidang.color} rounded-2xl flex items-center justify-center text-white text-xl mr-4 group-hover:scale-110 transition-transform duration-300`}>
+                        {bidang.icon}
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-800">{bidang.title}</h4>
+                    </div>
+                    <div className="space-y-2">
+                      {bidang.activities.map((activity, activityIndex) => (
+                        <div key={activityIndex} className="flex items-center text-sm">
+                          <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full mr-2 flex-shrink-0"></div>
+                          <span className="text-gray-700 leading-tight">{activity}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Program Unggulan Detail */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-8 shadow-2xl text-white mb-12"
+            >
+              <div className="flex items-center mb-8">
+                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-indigo-600 text-2xl mr-4">
+                  ⭐
+                </div>
+                <h3 className="text-3xl font-bold">Program Unggulan TK Mutiara Al-Madani</h3>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {[
+                  {
+                    title: "Mutiara Qur'ani",
+                    description: "Program tahfiz dan pengenalan Al-Qur'an yang menyenangkan",
+                    features: ["Tahfiz surat pendek", "Pengenalan huruf hijaiyah", "Pembiasaan doa pagi", "Maulid kecil"],
+                    icon: "📖"
+                  },
+                  {
+                    title: "Fun Islamic Science",
+                    description: "Eksplorasi sains dengan pendekatan islami",
+                    features: ["Eksperimen sains sesuai usia", "Pengenalan alam ciptaan Allah", "Observation book", "Learning by doing"],
+                    icon: "🔭"
+                  },
+                  {
+                    title: "English for Kids",
+                    description: "Pengenalan bahasa Inggris melalui aktivitas menyenangkan",
+                    features: ["Basic vocabulary", "Games dan songs", "Conversation sederhana", "Fun learning"],
+                    icon: "🌍"
+                  },
+                  {
+                    title: "Creative Art & Craft",
+                    description: "Pengembangan kreativitas dan imajinasi",
+                    features: ["Melatih seni & imajinasi", "Kolaborasi kelompok", "Galeri karya bulanan", "Berbagai media seni"],
+                    icon: "🎨"
+                  },
+                  {
+                    title: "Life Skill Anak Muslim",
+                    description: "Pembentukan kemandirian dan life skill islami",
+                    features: ["Merapikan barang", "Cara makan & minum", "Kebersihan diri", "Tanggung jawab"],
+                    icon: "💫"
+                  },
+                  {
+                    title: "Field Trip Edukatif",
+                    description: "Belajar langsung dari lingkungan sekitar",
+                    features: ["Kunjungan masjid", "Kebun & peternakan", "Pemadam kebakaran", "Learning experience"],
+                    icon: "🚌"
+                  },
+                  {
+                    title: "Parenting & Kolaborasi",
+                    description: "Kemitraan dengan orang tua dalam pendidikan",
+                    features: ["Seminar parenting", "Laporan perkembangan", "Class Meeting Parents Day", "Kolaborasi aktif"],
+                    icon: "👨‍👩‍👧‍👦"
+                  }
+                ].map((program, index) => (
+                  <div key={index} className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20 hover:border-white/40 transition-all duration-300 group">
+                    <div className="flex items-center mb-4">
+                      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-indigo-600 text-xl mr-3 group-hover:scale-110 transition-transform duration-300">
+                        {program.icon}
+                      </div>
+                      <h4 className="text-xl font-bold">{program.title}</h4>
+                    </div>
+                    <p className="text-blue-100 mb-4 text-sm leading-relaxed">{program.description}</p>
+                    <div className="space-y-2">
+                      {program.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex items-center text-sm">
+                          <div className="w-1.5 h-1.5 bg-yellow-300 rounded-full mr-2"></div>
+                          <span className="text-blue-50">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            {/* Metode dan Evaluasi */}
+            <div className="grid lg:grid-cols-2 gap-8">
+              {/* Metode Pembelajaran */}
+              <motion.div
+                variants={fadeInUp}
+                className="bg-white rounded-3xl p-8 shadow-2xl border border-green-200"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-teal-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-4">
+                    🎓
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800">Metode Pembelajaran</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {[
+                    "Circle Time (doa pagi, cerita, diskusi tema)",
+                    "Project-based Learning mini",
+                    "Outdoor learning experience",
+                    "Role play & drama islami",
+                    "Storytelling interaktif",
+                    "Sentra bermain (balok, peran, seni, bahan alam)"
+                  ].map((metode, index) => (
+                    <div key={index} className="flex items-center p-4 bg-green-50 rounded-xl border border-green-100">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-bold text-sm mr-4 flex-shrink-0">
+                        {index + 1}
+                      </div>
+                      <span className="text-gray-700 font-medium">{metode}</span>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Evaluasi Perkembangan */}
+              <motion.div
+                variants={fadeInUp}
+                className="bg-gradient-to-br from-teal-500 to-green-600 rounded-3xl p-8 shadow-2xl text-white"
+              >
+                <div className="flex items-center mb-6">
+                  <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-teal-600 text-2xl mr-4">
+                    📊
+                  </div>
+                  <h3 className="text-2xl font-bold">Evaluasi Perkembangan Anak</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  {[
+                    {
+                      title: "Observasi Harian",
+                      desc: "Pemantauan perkembangan anak secara kontinu"
+                    },
+                    {
+                      title: "Portofolio Karya Anak",
+                      desc: "Dokumentasi perkembangan melalui karya seni"
+                    },
+                    {
+                      title: "Capaian Perkembangan Usia",
+                      desc: "Penilaian sesuai milestone perkembangan"
+                    },
+                    {
+                      title: "Laporan Berkala Orang Tua",
+                      desc: "Komunikasi rutin perkembangan anak"
+                    },
+                    {
+                      title: "Fokus Karakter & Kemandirian",
+                      desc: "Penekanan pada nilai bukan angka"
+                    }
+                  ].map((evaluasi, index) => (
+                    <div key={index} className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+                      <div className="flex items-center mb-2">
+                        <div className="w-6 h-6 bg-yellow-300 rounded-full flex items-center justify-center text-teal-700 font-bold text-xs mr-3">
+                          ✓
+                        </div>
+                        <h4 className="font-bold text-lg">{evaluasi.title}</h4>
+                      </div>
+                      <p className="text-teal-100 text-sm pl-9">{evaluasi.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Program Unggulan Section */}
       <section 
         ref={programRef}
@@ -380,14 +710,15 @@ const TK = () => {
           </motion.div>
         </div>
       </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-yellow-400 to-pink-500">
         <div className="container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.1 }} // Tambahkan amount: 0.1
             transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
             className="max-w-2xl mx-auto"
           >
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 drop-shadow-lg">
