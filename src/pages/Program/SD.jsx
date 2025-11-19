@@ -139,6 +139,20 @@ const SD = () => {
               MUTIARA AL-MADANI
             </motion.h1>
 
+            {/* Akreditasi Badge */}
+            <motion.div
+              variants={fadeInUp}
+              className="inline-block mt-6 mb-8"
+            >
+              <div className="bg-white/20 backdrop-blur-sm border border-yellow-400/50 rounded-full px-4 py-2 inline-block">
+                <div className="flex items-center space-x-2">
+                  <span className="text-yellow-400 font-bold">🏆</span>
+                  <span className="text-yellow-300 font-semibold text-sm">TERAKREDITASI A - NILAI 94</span>
+                  <span className="text-yellow-400 font-bold">⭐</span>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Decorative Line */}
             <motion.div
               variants={fadeInUp}
@@ -198,6 +212,117 @@ const SD = () => {
           </nav>
         </div>
       </div>
+
+      {/* Legalitas & Izin Operasional Section */}
+      <section className="py-16 bg-white border-b">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            whileInView="animate"
+            variants={staggerContainer}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto"
+          >
+            <motion.div
+              variants={fadeInUp}
+              className="text-center mb-12"
+            >
+              <h2 className="text-4xl font-bold text-gray-800 mb-4">
+                Legalitas & Izin Operasional
+              </h2>
+              <div className="w-24 h-1 bg-green-500 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600">
+                Sekolah yang legal dan diakui oleh Pemerintah
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Izin Operasional */}
+              <motion.div
+                variants={fadeInUp}
+                className="bg-gradient-to-br from-green-500 to-blue-500 rounded-2xl p-6 text-white text-center shadow-2xl"
+              >
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-green-600 text-2xl mx-auto mb-4">
+                  📜
+                </div>
+                <h3 className="text-2xl font-bold mb-4">Izin Operasional</h3>
+                <div className="space-y-3 text-left">
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span>Dinas Pendidikan Kota Sungai Penuh</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span>Nomor: 420/Kep.163/2010</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span>Tahun Berdiri: 2010</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
+                    <span>Status: Aktif & Terdaftar</span>
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-white/20">
+                  <p className="text-green-100 text-sm">
+                    Sekolah telah memenuhi semua persyaratan operasional sesuai peraturan perundang-undangan
+                  </p>
+                </div>
+              </motion.div>
+
+              {/* NPSN */}
+              <motion.div
+                variants={fadeInUp}
+                className="bg-white rounded-2xl p-6 border-2 border-green-200 text-center shadow-xl"
+              >
+                <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center text-green-600 text-2xl mx-auto mb-4">
+                  🏛️
+                </div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-4">NPSN</h3>
+                <div className="text-4xl font-bold text-green-600 mb-2">69787162</div>
+                <p className="text-gray-600">Nomor Pokok Sekolah Nasional</p>
+                <p className="text-sm text-gray-500 mt-2">Terdaftar di Kementerian Pendidikan, Kebudayaan, Riset, dan Teknologi RI</p>
+                
+                <div className="mt-6 p-4 bg-green-50 rounded-xl">
+                  <h4 className="font-bold text-green-800 mb-2">Verifikasi Data</h4>
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Status:</span>
+                    <span className="font-bold">✓ AKTIF</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Bentuk:</span>
+                    <span className="font-bold">SEKOLAH</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-green-700">
+                    <span>Status Kepemilikan:</span>
+                    <span className="font-bold">SWASTA</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Additional Legal Info */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-8 text-center"
+            >
+              <div className="bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                <h4 className="text-lg font-bold text-gray-800 mb-3">📋 Dokumen Legalitas Lengkap</h4>
+                <p className="text-gray-600 mb-4">
+                  Semua dokumen legalitas dapat dilihat di administrasi sekolah dan telah diverifikasi oleh instansi terkait
+                </p>
+                <div className="flex flex-wrap justify-center gap-4 text-sm">
+                  <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">✓ Izin Operasional</span>
+                  <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">✓ Akta Notaris</span>
+                  <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">✓ NPWP Sekolah</span>
+                  <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full">✓ SK Yayasan</span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Kata Sambutan Kepala SD dengan Foto */}
       <section className="py-20 bg-gradient-to-br from-green-50 to-blue-50">
@@ -313,6 +438,147 @@ const SD = () => {
                         <p className="text-gray-700 group-hover/item:text-blue-600 transition-colors duration-300 leading-relaxed">{mission}</p>
                       </div>
                     ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Sertifikat Akreditasi Section */}
+      <section className="py-16 bg-gradient-to-br from-yellow-50 to-amber-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            whileInView="animate"
+            variants={staggerContainer}
+            viewport={{ once: true }}
+            className="max-w-5xl mx-auto"
+          >
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white rounded-3xl p-8 shadow-2xl border-2 border-yellow-200"
+            >
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Sertifikat Image */}
+                <div className="flex-shrink-0">
+                  <div className="relative group cursor-pointer">
+                    {/* Sertifikat Frame */}
+                    <div className="w-64 h-80 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-2xl shadow-2xl transform rotate-2 group-hover:rotate-0 transition-transform duration-300 p-4">
+                      <div className="w-full h-full bg-white rounded-lg border-4 border-yellow-800 flex flex-col items-center justify-center p-4 text-center">
+                        {/* Sertifikat Header */}
+                        <div className="text-xs font-bold text-gray-800 mb-2">
+                          BADAN AKREDITASI NASIONAL SEKOLAH/MADRASAH
+                        </div>
+                        <div className="text-lg font-bold text-red-600 mb-1">
+                          SERTIFIKAT AKREDITASI
+                        </div>
+                        <div className="w-full h-px bg-red-600 my-2"></div>
+                        
+                        {/* Content */}
+                        <div className="text-6xl font-bold text-yellow-600 mb-2">A</div>
+                        <div className="text-sm font-bold text-gray-700">UNGGUL</div>
+                        <div className="text-xs text-gray-600 mt-1">Nilai: 94</div>
+                        
+                        <div className="text-xs text-gray-500 mt-4">
+                          No. 15.22.00084
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Berlaku: 2022-2027
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Decorative Stamp */}
+                    <div className="absolute -top-4 -right-4 w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs transform rotate-12 shadow-lg border-2 border-white">
+                      RESMI
+                    </div>
+                    
+                    {/* Ribbon */}
+                    <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2 bg-yellow-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                      TERAKREDITASI
+                    </div>
+                  </div>
+                </div>
+
+                {/* Sertifikat Content */}
+                <div className="flex-1 text-left">
+                  <div className="inline-block bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-2 rounded-full text-sm font-bold mb-4">
+                    🏆 AKREDITASI A (UNGGUL)
+                  </div>
+                  
+                  <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                    Sertifikat Akreditasi <span className="text-yellow-600">Nilai 94</span>
+                  </h2>
+                  
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center bg-green-50 rounded-xl p-4">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                        <span className="text-green-600 font-bold text-lg">A</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-bold">Predikat: UNGGUL</span>
+                        <p className="text-green-600 font-semibold">Nilai Akreditasi: 94/100</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center bg-blue-50 rounded-xl p-4">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                        <span className="text-blue-600 font-bold">🏛️</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-bold">BAN-S/M</span>
+                        <p className="text-blue-600">Badan Akreditasi Nasional Sekolah/Madrasah</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center bg-purple-50 rounded-xl p-4">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                        <span className="text-purple-600 font-bold">📅</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-bold">Masa Berlaku</span>
+                        <p className="text-purple-600">Oktober 2022 - Oktober 2027 (5 Tahun)</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center bg-amber-50 rounded-xl p-4">
+                      <div className="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mr-4">
+                        <span className="text-amber-600 font-bold">⭐</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-700 font-bold">Standar Nasional</span>
+                        <p className="text-amber-600">Memenuhi 8 Standar Nasional Pendidikan</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                    <p className="text-gray-700 leading-relaxed text-sm">
+                      <strong>SD ISLAM MUTIARA AL MADANI</strong> telah meraih predikat <strong>UNGGUL</strong> 
+                      dengan nilai <strong>94</strong> dari Badan Akreditasi Nasional Sekolah/Madrasah. 
+                      Sertifikat No. <strong>15.22.00084</strong> berdasarkan SK No. <strong>1453/BAN-SM/SK/2022</strong>.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-4">
+                    <button 
+                      onClick={() => document.getElementById('sertifikatModal').showModal()}
+                      className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white px-6 py-3 rounded-xl font-semibold hover:from-yellow-600 hover:to-amber-600 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center space-x-2"
+                    >
+                      <span>🔍</span>
+                      <span>Lihat Sertifikat Lengkap</span>
+                    </button>
+                    
+                    <a 
+                      href="/documents/SERTIFIKAT_AKREDITASI_SD.pdf"
+                      download
+                      className="border-2 border-yellow-500 text-yellow-600 px-6 py-3 rounded-xl font-semibold hover:bg-yellow-50 transition-all duration-300 flex items-center space-x-2"
+                    >
+                      <span>📥</span>
+                      <span>Download PDF</span>
+                    </a>
                   </div>
                 </div>
               </div>
@@ -818,6 +1084,7 @@ const SD = () => {
           </motion.div>
         </div>
       </section>
+
       {/* Enhanced CTA Section */}
       <section className="py-20 bg-gradient-to-r from-green-500 to-blue-600 relative overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
@@ -853,6 +1120,49 @@ const SD = () => {
           </motion.div>
         </div>
       </section>
+
+      {/* Modal for Full Certificate */}
+      <dialog id="sertifikatModal" className="modal modal-bottom sm:modal-middle">
+        <div className="modal-box max-w-4xl p-0 bg-white rounded-2xl overflow-hidden">
+          <div className="bg-gradient-to-r from-yellow-500 to-amber-500 p-4 text-white text-center">
+            <h3 className="text-xl font-bold">SERTIFIKAT AKREDITASI SD ISLAM MUTIARA AL-MADANI</h3>
+          </div>
+          <div className="p-6">
+            <div className="bg-gray-50 rounded-xl p-6 border-2 border-yellow-200">
+              {/* Sertifikat Content dalam Modal */}
+              <div className="text-center mb-6">
+                <div className="text-sm text-gray-600 mb-2">BADAN AKREDITASI NASIONAL SEKOLAH/MADRASAH</div>
+                <div className="text-2xl font-bold text-red-600 mb-2">SERTIFIKAT AKREDITASI</div>
+                <div className="w-32 h-1 bg-red-600 mx-auto mb-4"></div>
+                <div className="text-4xl font-bold text-yellow-600 mb-2">A</div>
+                <div className="text-lg font-bold text-gray-800">UNGGUL</div>
+                <div className="text-gray-600">Nilai: 94/100</div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-6 text-sm">
+                <div>
+                  <h4 className="font-bold text-gray-800 mb-2">Informasi Sekolah:</h4>
+                  <p><strong>Nama:</strong> SD ISLAM MUTIARA AL MADANI</p>
+                  <p><strong>NPSN:</strong> 69787162</p>
+                  <p><strong>Alamat:</strong> JL YOS SUDARSO NO 28, KOTA SUNGAI PENUH, JAMBI</p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-800 mb-2">Informasi Akreditasi:</h4>
+                  <p><strong>No. Sertifikat:</strong> 15.22.00084</p>
+                  <p><strong>SK BAN-S/M:</strong> 1453/BAN-SM/SK/2022</p>
+                  <p><strong>Masa Berlaku:</strong> 20 Oktober 2022 - 20 Oktober 2027</p>
+                  <p><strong>Ditandatangani oleh:</strong> Dr. Toni Toharudin, M.Sc.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="modal-action p-4">
+            <form method="dialog">
+              <button className="btn bg-yellow-500 text-white hover:bg-yellow-600">Tutup</button>
+            </form>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 };

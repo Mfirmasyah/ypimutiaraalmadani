@@ -10,6 +10,7 @@ const SMP = () => {
   const [kurikulumRef, kurikulumVisible] = useScrollAnimation(0.2);
   const [extracurricularRef, extracurricularVisible] = useScrollAnimation(0.2);
   const [facilitiesRef, facilitiesVisible] = useScrollAnimation(0.2);
+  const [izinRef, izinVisible] = useScrollAnimation(0.2);
   
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -307,6 +308,210 @@ const SMP = () => {
         </div>
       </section>
 
+      {/* Izin Operasional Section */}
+      <section 
+        ref={izinRef}
+        className="py-20 bg-gradient-to-br from-blue-50 to-cyan-50"
+      >
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            animate={izinVisible ? "animate" : "initial"}
+            variants={staggerContainer}
+            className="max-w-4xl mx-auto"
+          >
+            {/* Section Header */}
+            <motion.div 
+              variants={fadeInUp}
+              className="text-center mb-12"
+            >
+              <div className="inline-block bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 border border-blue-200 mb-4">
+                <span className="text-blue-600 font-semibold text-lg">📄 LEGALITAS & PERIZINAN</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Izin Operasional
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-blue-400 to-cyan-500 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Pengakuan resmi dari Pemerintah Kota Sungai Penuh untuk penyelenggaraan pendidikan
+              </p>
+            </motion.div>
+
+            {/* Izin Operasional Card */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-blue-200 hover:border-blue-300 transition-all duration-300"
+            >
+              {/* Header */}
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-600 py-6 px-8 text-center">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-white mb-2">PEMERINTAH KOTA SUNGAI PENUH</h3>
+                  <h4 className="text-xl font-semibold text-blue-100">DINAS PENDIDIKAN</h4>
+                </div>
+                <div className="text-blue-100 text-sm">
+                  <p>Alamat : Jl. Depati Parbo No. 01 Kec. Pondok Tinggi Kota Sungai Penuh</p>
+                  <p>Telp/Fax: (0748) 22448 | Kode Pos: 37113</p>
+                  <p>
+                    Website: <span className="text-yellow-300">http://www.sungaipenuhkota.go.id</span> | 
+                    Email: <span className="text-yellow-300">disdikson@gmail.com</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-8">
+                {/* Keputusan */}
+                <div className="text-center mb-8 border-b border-gray-200 pb-8">
+                  <h4 className="text-xl font-bold text-gray-800 mb-4">KEPUTUSAN KEPALA DINAS PENDIDIKAN</h4>
+                  <h5 className="text-lg font-semibold text-gray-700 mb-2">KOTA SUNGAI PENUH</h5>
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                    <p className="text-2xl font-bold text-blue-600">NOMOR: 420/OOI/DISDIK.2/I/2023</p>
+                  </div>
+                </div>
+
+                {/* Tentang */}
+                <div className="text-center mb-8">
+                  <h4 className="text-xl font-bold text-gray-800 mb-4">TENTANG</h4>
+                  <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-2xl p-6 border border-yellow-200">
+                    <h5 className="text-2xl font-bold text-gray-800 mb-2">IZIN OPERASIONAL</h5>
+                    <h6 className="text-xl font-semibold text-blue-600">SEKOLAH MENENGAH PERTAMA</h6>
+                    <h6 className="text-xl font-bold text-gray-800 mt-2">ISLAM MUTIARA AL-MADANI</h6>
+                  </div>
+                </div>
+
+                {/* Menimbang */}
+                <div className="mb-8 bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="w-3 h-3 bg-blue-500 rounded-full mr-3"></span>
+                    Menimbang
+                  </h4>
+                  <p className="text-gray-700 leading-relaxed">
+                    Bahwa dalam rangka melaksanakan ketentuan-ketentuan dalam Peraturan Menteri Pendidikan dan Kebudayaan 
+                    Nomor 36 Tahun 2014 tentang Pedoman Pendirian, Perubahan dan Penutupan Satuan Pendidikan Dasar dan Menengah.
+                  </p>
+                </div>
+
+                {/* Mengingat */}
+                <div className="mb-8 bg-gray-50 rounded-2xl p-6 border border-gray-200">
+                  <h4 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <span className="w-3 h-3 bg-green-500 rounded-full mr-3"></span>
+                    Mengingat
+                  </h4>
+                  <div className="space-y-3 text-sm">
+                    {[
+                      "Undang-undang Nomor 20 Tahun 2003 tentang Sistem Pendidikan Nasional",
+                      "Undang-undang Nomor 25 Tahun 2008 tentang Pembentukan Kota Sungai Penuh di Provinsi Jambi",
+                      "Undang-undang Nomor 23 Tahun 2014 tentang Pemerintahan Daerah",
+                      "Peraturan Pemerintah Nomor 38 Tahun 2007 tentang Pembagian Urusan Pemerintahan",
+                      "Peraturan Pemerintah Nomor 17 Tahun 2010 tentang Pengelolaan dan Penyelenggara Pendidikan",
+                      "Peraturan Menteri Pendidikan dan Kebudayaan Nomor 22 Tahun 2016 tentang Standar Proses Pendidikan",
+                      "Peraturan Walikota Nomor 31 Tahun 2016 tentang Dinas Pendidikan Kota Sungai Penuh"
+                    ].map((item, index) => (
+                      <div key={index} className="flex items-start">
+                        <span className="text-blue-600 font-bold mr-3 mt-1">{index + 1}.</span>
+                        <span className="text-gray-700 flex-1">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Memutuskan */}
+                <div className="mb-8 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
+                  <h4 className="text-xl font-bold text-blue-600 mb-6 text-center">MEMUTUSKAN</h4>
+                  
+                  {/* Menetapkan */}
+                  <div className="space-y-6">
+                    <div className="bg-white rounded-xl p-4 border border-blue-100">
+                      <h5 className="font-bold text-gray-800 mb-2">KESATU</h5>
+                      <p className="text-gray-700">
+                        Memberi Izin Operasional Sekolah Menengah Pertama Islam Mutiara Al-Madani
+                      </p>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-blue-100">
+                      <h5 className="font-bold text-gray-800 mb-3">KEDUA</h5>
+                      <p className="text-gray-700 mb-3">Kewajiban Sekolah Menengah Pertama adalah:</p>
+                      <div className="space-y-2 ml-4">
+                        <div className="flex items-start">
+                          <span className="text-blue-600 font-bold mr-3 mt-1">1.</span>
+                          <span className="text-gray-700">Menyelenggarakan Fungsi satuan pendidikan sekolah Menengah Pertama</span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-blue-600 font-bold mr-3 mt-1">2.</span>
+                          <span className="text-gray-700">Melaksanakan Petunjuk Teknis yang ditetapkan Dinas Pendidikan Kota Sungai Penuh</span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-blue-600 font-bold mr-3 mt-1">3.</span>
+                          <span className="text-gray-700">Mentaati Ketentuan Perundang-Undangan yang berlaku</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-4 border border-blue-100">
+                      <h5 className="font-bold text-gray-800 mb-2">KETIGA</h5>
+                      <p className="text-gray-700">
+                        Keputusan ini berlaku sejak ditetapkan, apabila terdapat kekeliruan didalamnya akan diperbaiki sebagaimana mestinya.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="border-t border-gray-200 pt-8">
+                  <div className="grid md:grid-cols-2 gap-8">
+                    <div className="text-center">
+                      <p className="text-gray-600 mb-2">Ditetapkan di Sungai Penuh</p>
+                      <p className="text-gray-700 font-semibold">Pada tanggal Januari 2023</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-gray-600 mb-2">Plt. Kepala Dinas Pendidikan</p>
+                      <p className="text-gray-700 font-semibold">Kota Sungai Penuh</p>
+                      <div className="mt-4">
+                        <p className="text-lg font-bold text-blue-600">KHAIDIRMAN, S.Pd. M.SI.</p>
+                        <p className="text-gray-600">Pembina TK.I</p>
+                        <p className="text-gray-500 text-sm">NIP. 19680418 199003 1 005</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Informasi Tambahan */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-8 text-center"
+            >
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-blue-200">
+                <h4 className="text-xl font-bold text-gray-800 mb-4">
+                  ✅ Legalitas Terjamin
+                </h4>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  SMP Islam Mutiara Al-Madani telah mendapatkan izin operasional resmi dari Dinas Pendidikan 
+                  Kota Sungai Penuh dengan nomor <strong>420/OOI/DISDIK.2/I/2023</strong>. 
+                  Ini menjamin bahwa pendidikan yang diselenggarakan memenuhi standar nasional 
+                  dan sesuai dengan peraturan perundang-undangan yang berlaku.
+                </p>
+                <div className="grid md:grid-cols-3 gap-4 mt-6">
+                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                    <div className="text-2xl mb-2">🏛️</div>
+                    <h5 className="font-bold text-blue-600 text-sm">Diakui Pemerintah</h5>
+                  </div>
+                  <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                    <div className="text-2xl mb-2">📚</div>
+                    <h5 className="font-bold text-green-600 text-sm">Standar Nasional</h5>
+                  </div>
+                  <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
+                    <div className="text-2xl mb-2">⚖️</div>
+                    <h5 className="font-bold text-purple-600 text-sm">Legal Formal</h5>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Enhanced Program Unggulan Section */}
       <section className="py-20 bg-gradient-to-br from-purple-50 to-indigo-50 relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">
@@ -591,6 +796,7 @@ const SMP = () => {
           </motion.div>
         </div>
       </section>
+
       {/* Enhanced Prestasi Section */}
       <section className="py-20 bg-gradient-to-r from-purple-600 to-indigo-700 text-white relative overflow-hidden">
         <div className="container mx-auto px-4 relative z-10">

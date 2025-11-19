@@ -101,7 +101,6 @@ const Gallery = () => {
         setLoading(true);
         setError(null);
         
-        // Update endpoint URL
         const response = await fetch(`${STRAPI_CONFIG.URL}/api/galleries?populate=*`);
         
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -155,13 +154,18 @@ const Gallery = () => {
     fetchGalleryData();
   }, []);
 
-  const categories = [
-    { id: 'all', name: 'Semua', count: galleryItems.length, color: 'from-purple-500 to-pink-500' },
-    { id: 'akademik', name: 'Akademik', count: galleryItems.filter(item => item.kategori === 'akademik').length, color: 'from-blue-500 to-cyan-500' },
-    { id: 'ekstrakurikuler', name: 'Ekstrakurikuler', count: galleryItems.filter(item => item.kategori === 'ekstrakurikuler').length, color: 'from-green-500 to-emerald-500' },
-    { id: 'keagamaan', name: 'Keagamaan', count: galleryItems.filter(item => item.kategori === 'keagamaan').length, color: 'from-orange-500 to-red-500' },
+  // Kategori dikelompokkan per jenjang dan kegiatan
+  const jenjangCategories = [
+    { id: 'tk', name: 'TK', count: galleryItems.filter(item => item.kategori === 'tk').length, color: 'from-pink-500 to-rose-500' },
+    { id: 'sd', name: 'SD', count: galleryItems.filter(item => item.kategori === 'sd').length, color: 'from-blue-500 to-cyan-500' },
+    { id: 'smp', name: 'SMP', count: galleryItems.filter(item => item.kategori === 'smp').length, color: 'from-green-500 to-emerald-500' },
+  ];
+
+  const kegiatanCategories = [
+    { id: 'akademik', name: 'Akademik', count: galleryItems.filter(item => item.kategori === 'akademik').length, color: 'from-indigo-500 to-purple-500' },
+    { id: 'ekstrakurikuler', name: 'Ekstrakurikuler', count: galleryItems.filter(item => item.kategori === 'ekstrakurikuler').length, color: 'from-teal-500 to-green-500' },
+    { id: 'seni', name: 'Seni & Budaya', count: galleryItems.filter(item => item.kategori === 'seni').length, color: 'from-orange-500 to-red-500' },
     { id: 'olahraga', name: 'Olahraga', count: galleryItems.filter(item => item.kategori === 'olahraga').length, color: 'from-yellow-500 to-amber-500' },
-    { id: 'seni', name: 'Seni & Budaya', count: galleryItems.filter(item => item.kategori === 'seni').length, color: 'from-indigo-500 to-purple-500' },
     { id: 'umum', name: 'Umum', count: galleryItems.filter(item => item.kategori === 'umum').length, color: 'from-gray-500 to-slate-500' }
   ];
 
@@ -231,23 +235,61 @@ const Gallery = () => {
         </div>
       </section>
 
-      {/* Filter Categories */}
+      {/* Filter Categories dengan Grouping */}
       <section className="py-12 bg-white border-b">
         <div className="container mx-auto px-4">
-          <div className="flex flex-wrap justify-center gap-3">
-            {categories.map((category) => (
-              <button
-                key={category.id}
-                onClick={() => setActiveFilter(category.id)}
-                className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
-                  activeFilter === category.id
-                    ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {category.name} ({category.count})
-              </button>
-            ))}
+          {/* Semua Button */}
+          <div className="flex justify-center mb-8">
+            <button
+              onClick={() => setActiveFilter('all')}
+              className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all ${
+                activeFilter === 'all'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Semua Kegiatan ({galleryItems.length})
+            </button>
+          </div>
+
+          {/* Group 1: Jenjang Sekolah */}
+          <div className="mb-8">
+            <h3 className="text-center text-xl font-bold text-gray-800 mb-4">Jenjang Sekolah</h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {jenjangCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveFilter(category.id)}
+                  className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
+                    activeFilter === category.id
+                      ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {category.name} ({category.count})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Group 2: Jenis Kegiatan */}
+          <div>
+            <h3 className="text-center text-xl font-bold text-gray-800 mb-4">Jenis Kegiatan</h3>
+            <div className="flex flex-wrap justify-center gap-3">
+              {kegiatanCategories.map((category) => (
+                <button
+                  key={category.id}
+                  onClick={() => setActiveFilter(category.id)}
+                  className={`px-6 py-3 rounded-2xl font-semibold transition-all ${
+                    activeFilter === category.id
+                      ? `bg-gradient-to-r ${category.color} text-white shadow-lg`
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  {category.name} ({category.count})
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </section>
