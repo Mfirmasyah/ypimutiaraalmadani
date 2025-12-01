@@ -151,8 +151,10 @@ const SMP = () => {
               className="text-xl md:text-2xl lg:text-3xl text-white leading-relaxed mb-8 max-w-4xl mx-auto font-light drop-shadow-lg"
             >
               Mempersiapkan Siswa Menghadapi <span className="text-yellow-400 font-bold">Tantangan Global</span> 
-              {' '}dengan Bekal <span className="text-purple-300 font-bold">Ilmu</span> dan{' '}
-              <span className="text-indigo-300 font-bold">Iman</span>
+              {' '}dengan Bekal <span className="text-purple-300 font-bold">Ilmu</span>{' '}
+              <span className="text-purple-300 font-bold"></span>Iman{' '}
+              <span className="text-purple-300 font-bold"></span> dan{' '}
+              <span className="text-indigo-300 font-bold">Akhlak</span>
             </motion.p>
 
             {/* Secondary Description */}
@@ -644,13 +646,13 @@ const SMP = () => {
                         "Bahasa Indonesia",
                         "Pendidikan Kewarganegaraan",
                         "Bahasa Inggris",
-                        "Ilmu Pengetahuan Alam (IPA)",
-                        "Ilmu Pengetahuan Sosial (IPS)",
+                        "Ilmu Pengetahuan Alam & Sosial (IPAs)",
                         "Pendidikan Agama Islam",
                         "Seni Budaya dan Prakarya",
                         "Pendidikan Jasmani, Olahraga dan Kesehatan",
                         "Seni & Prakarya",
-                        "Informatika"
+                        "Akidah",
+                        "Coding"
                       ].map((subject, index) => (
                         <div key={index} className="flex items-center">
                           <div className="w-2 h-2 bg-yellow-400 rounded-full mr-3"></div>
@@ -711,7 +713,7 @@ const SMP = () => {
                       color: "from-indigo-400 to-indigo-500"
                     },
                     {
-                      title: "Mulok",
+                      title: "Mulok (Seni Budaya Daerah)",
                       items: [""],
                       icon: "",
                       color: "from-red-400 to-red-500"
@@ -774,8 +776,8 @@ const SMP = () => {
                 { name: "Olahraga", icon: "", description: "Atletik, Badminton, Futsal, Dll ", color: "bg-yellow-500" },
                 { name: "Seni", icon: "", description: "Tari, Asamble Vocal, Karya Anyam, Marawis,Melukis", color: "bg-green-500" },
                 { name: "Pramuka", icon: "", description: "", color: "bg-red-500" },
-                { name: "Story Telling", icon: "", description: "", color: "bg-blue-500" },
-                { name: "Public Speaking", icon: "", description: "", color: "bg-purple-500" },
+                { name: "Kaligrafi", icon: "", description: "", color: "bg-blue-500" },
+                { name: "Cerdas Berbahasa (Bahasa Inggris & Bahasa Indonesia)", icon: "", description: "", color: "bg-purple-500" },
                 { name: "Palang Merah Remaja", icon: "", description: "", color: "bg-indigo-500" },
                 { name: "Osis", icon: "", description: "", color: "bg-orange-500" },
               ].map((activity, index) => (

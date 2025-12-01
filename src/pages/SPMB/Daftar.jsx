@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const Daftar = () => {
@@ -38,14 +38,30 @@ const Daftar = () => {
     aktaKelahiran: null,
     kartuKeluarga: null,
     rapor: null,
-    suratSehat: null
+    riwayatPenyakit: null
   });
 
-  // ✅ DIPERBAIKI: URL Strapi Cloud langsung
+  // State untuk menampilkan error per field
+  const [errors, setErrors] = useState({});
+  const [formTouched, setFormTouched] = useState({});
+
+  // ✅ URL Strapi Cloud langsung
   const API_URL = 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
 
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
+    
+    // Tandai field sebagai sudah disentuh
+    setFormTouched(prev => ({
+      ...prev,
+      [name]: true
+    }));
+    
+    // Hapus error untuk field ini
+    setErrors(prev => ({
+      ...prev,
+      [name]: ''
+    }));
     
     if (type === 'file') {
       setFormData(prevState => ({
@@ -60,9 +76,134 @@ const Daftar = () => {
     }
   };
 
+  // ✅ FUNGSI VALIDASI PER STEP
+  const validateCurrentStep = () => {
+    const newErrors = {};
+    
+    switch(currentStep) {
+      case 1: // Data Pribadi
+        if (!formData.namaLengkap.trim()) newErrors.namaLengkap = 'Nama lengkap harus diisi';
+        else if (formData.namaLengkap.length > 100) newErrors.namaLengkap = 'Nama maksimal 100 karakter';
+        
+        if (!formData.jenisKelamin) newErrors.jenisKelamin = 'Jenis kelamin harus dipilih';
+        
+        if (!formData.tempatLahir.trim()) newErrors.tempatLahir = 'Tempat lahir harus diisi';
+        else if (formData.tempatLahir.length > 50) newErrors.tempatLahir = 'Tempat lahir maksimal 50 karakter';
+        
+        if (!formData.tanggalLahir) newErrors.tanggalLahir = 'Tanggal lahir harus diisi';
+        else {
+          const birthDate = new Date(formData.tanggalLahir);
+          const today = new Date();
+          const age = today.getFullYear() - birthDate.getFullYear();
+          
+          // Validasi usia berdasarkan program
+          if (formData.programPilihan === 'TK' && age > 6) {
+            newErrors.tanggalLahir = 'Untuk TK, usia maksimal 6 tahun';
+          }
+        }
+        
+        if (!formData.agama) newErrors.agama = 'Agama harus dipilih';
+        
+        if (!formData.telepon.trim()) newErrors.telepon = 'Telepon harus diisi';
+        else if (!/^[0-9]{10,15}$/.test(formData.telepon)) newErrors.telepon = 'Format telepon tidak valid';
+        
+        if (!formData.email.trim()) newErrors.email = 'Email harus diisi';
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Format email tidak valid';
+        else if (formData.email.length > 100) newErrors.email = 'Email maksimal 100 karakter';
+        
+        if (!formData.alamat.trim()) newErrors.alamat = 'Alamat harus diisi';
+        else if (formData.alamat.length > 500) newErrors.alamat = 'Alamat maksimal 500 karakter';
+        break;
+        
+      case 2: // Data Orang Tua
+        if (!formData.namaAyah.trim()) newErrors.namaAyah = 'Nama ayah harus diisi';
+        else if (formData.namaAyah.length > 100) newErrors.namaAyah = 'Nama ayah maksimal 100 karakter';
+        
+        if (!formData.pekerjaanAyah.trim()) newErrors.pekerjaanAyah = 'Pekerjaan ayah harus diisi';
+        else if (formData.pekerjaanAyah.length > 50) newErrors.pekerjaanAyah = 'Pekerjaan ayah maksimal 50 karakter';
+        
+        if (!formData.teleponAyah.trim()) newErrors.teleponAyah = 'Telepon ayah harus diisi';
+        else if (!/^[0-9]{10,15}$/.test(formData.teleponAyah)) newErrors.teleponAyah = 'Format telepon tidak valid';
+        
+        if (!formData.namaIbu.trim()) newErrors.namaIbu = 'Nama ibu harus diisi';
+        else if (formData.namaIbu.length > 100) newErrors.namaIbu = 'Nama ibu maksimal 100 karakter';
+        
+        if (!formData.pekerjaanIbu.trim()) newErrors.pekerjaanIbu = 'Pekerjaan ibu harus diisi';
+        else if (formData.pekerjaanIbu.length > 50) newErrors.pekerjaanIbu = 'Pekerjaan ibu maksimal 50 karakter';
+        
+        if (!formData.teleponIbu.trim()) newErrors.teleponIbu = 'Telepon ibu harus diisi';
+        else if (!/^[0-9]{10,15}$/.test(formData.teleponIbu)) newErrors.teleponIbu = 'Format telepon tidak valid';
+        
+        if (!formData.alamatOrtu.trim()) newErrors.alamatOrtu = 'Alamat orang tua harus diisi';
+        else if (formData.alamatOrtu.length > 500) newErrors.alamatOrtu = 'Alamat maksimal 500 karakter';
+        break;
+        
+      case 3: // Data Akademik
+        if (!formData.sekolahAsal.trim()) newErrors.sekolahAsal = 'Sekolah asal harus diisi';
+        else if (formData.sekolahAsal.length > 100) newErrors.sekolahAsal = 'Sekolah asal maksimal 100 karakter';
+        
+        if (!formData.tahunLulus) newErrors.tahunLulus = 'Tahun lulus harus dipilih';
+        else {
+          const year = parseInt(formData.tahunLulus);
+          const currentYear = new Date().getFullYear();
+          if (year < 2000 || year > currentYear) newErrors.tahunLulus = 'Tahun lulus tidak valid';
+        }
+        
+        if (!formData.nilaiRataRata) newErrors.nilaiRataRata = 'Nilai rata-rata harus diisi';
+        else {
+          const nilai = parseFloat(formData.nilaiRataRata);
+          if (isNaN(nilai) || nilai < 0 || nilai > 100) newErrors.nilaiRataRata = 'Nilai harus antara 0-100';
+        }
+        
+        if (!formData.programPilihan) newErrors.programPilihan = 'Program pilihan harus dipilih';
+        
+        if (!formData.jalurPendaftaran) newErrors.jalurPendaftaran = 'Jalur pendaftaran harus dipilih';
+        
+        if (formData.alamatSekolah && formData.alamatSekolah.length > 500) {
+          newErrors.alamatSekolah = 'Alamat sekolah maksimal 500 karakter';
+        }
+        break;
+        
+      case 4: // Upload Dokumen
+        if (!formData.foto) newErrors.foto = 'Foto harus diupload';
+        else if (formData.foto.size > 2 * 1024 * 1024) newErrors.foto = 'Foto maksimal 2MB';
+        
+        if (!formData.aktaKelahiran) newErrors.aktaKelahiran = 'Akta kelahiran harus diupload';
+        else if (formData.aktaKelahiran.size > 2 * 1024 * 1024) newErrors.aktaKelahiran = 'Akta kelahiran maksimal 2MB';
+        
+        if (!formData.kartuKeluarga) newErrors.kartuKeluarga = 'Kartu keluarga harus diupload';
+        else if (formData.kartuKeluarga.size > 2 * 1024 * 1024) newErrors.kartuKeluarga = 'Kartu keluarga maksimal 2MB';
+        
+        if (!formData.rapor) newErrors.rapor = 'Rapor harus diupload';
+        else if (formData.rapor.size > 2 * 1024 * 1024) newErrors.rapor = 'Rapor maksimal 2MB';
+        
+        // riwayatPenyakit opsional, tapi jika diupload cek ukuran
+        if (formData.riwayatPenyakit && formData.riwayatPenyakit.size > 2 * 1024 * 1024) {
+          newErrors.riwayatPenyakit = 'Surat riwayat penyakit maksimal 2MB';
+        }
+        break;
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true jika tidak ada error
+  };
+
   const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
-    window.scrollTo(0, 0);
+    // Validasi step saat ini sebelum lanjut
+    if (validateCurrentStep()) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    } else {
+      // Scroll ke error pertama
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus();
+        }
+      }
+    }
   };
 
   const prevStep = () => {
@@ -70,42 +211,78 @@ const Daftar = () => {
     window.scrollTo(0, 0);
   };
 
-  // Upload file ke Cloudinary
-  const uploadToCloudinary = async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET);
-    formData.append('folder', 'spmb_documents');
-
-    try {
-      const response = await fetch(`https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/upload`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const data = await response.json();
-      return data.secure_url;
-    } catch (error) {
-      console.error('Error uploading to Cloudinary:', error);
-      throw error;
+  // Helper untuk menampilkan error message
+  const renderError = (fieldName) => {
+    if (errors[fieldName] && (formTouched[fieldName] || currentStep === 4)) {
+      return (
+        <p className="text-red-600 text-xs mt-1 flex items-center">
+          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {errors[fieldName]}
+        </p>
+      );
     }
+    return null;
   };
 
-  // ✅ DIPERBAIKI: Simpan data ke Strapi dengan error handling yang lebih baik
+  // ✅ DIPERBAIKI: Simpan data ke Strapi untuk schema media dengan semua file
   const saveToStrapi = async (pendaftarData) => {
     try {
-      console.log('🚀 Saving to Strapi:', pendaftarData);
+      console.log('🚀 Saving to Strapi with files...');
+      
+      // Persiapkan FormData untuk mengirim file
+      const formData = new FormData();
+      
+      // Tambahkan semua text fields
+      formData.append('data', JSON.stringify({
+        nomorPendaftaran: pendaftarData.nomorPendaftaran,
+        namaLengkap: pendaftarData.namaLengkap,
+        jenisKelamin: pendaftarData.jenisKelamin,
+        tempatLahir: pendaftarData.tempatLahir,
+        tanggalLahir: pendaftarData.tanggalLahir,
+        agama: pendaftarData.agama,
+        alamat: pendaftarData.alamat,
+        telepon: pendaftarData.telepon,
+        email: pendaftarData.email,
+        namaAyah: pendaftarData.namaAyah,
+        pekerjaanAyah: pendaftarData.pekerjaanAyah,
+        teleponAyah: pendaftarData.teleponAyah,
+        namaIbu: pendaftarData.namaIbu,
+        pekerjaanIbu: pendaftarData.pekerjaanIbu,
+        teleponIbu: pendaftarData.teleponIbu,
+        alamatOrtu: pendaftarData.alamatOrtu,
+        sekolahAsal: pendaftarData.sekolahAsal,
+        alamatSekolah: pendaftarData.alamatSekolah,
+        tahunLulus: pendaftarData.tahunLulus,
+        nilaiRataRata: pendaftarData.nilaiRataRata,
+        programPilihan: pendaftarData.programPilihan,
+        jalurPendaftaran: pendaftarData.jalurPendaftaran,
+        status: pendaftarData.status,
+        tanggalDaftar: pendaftarData.tanggalDaftar,
+        riwayatPenyakit: pendaftarData.riwayatPenyakit || null
+      }));
+      
+      // ✅ DITAMBAHKAN: Semua 5 file ke FormData
+      if (pendaftarData.fotoFile) {
+        formData.append(`files.foto`, pendaftarData.fotoFile);
+      }
+      if (pendaftarData.aktaKelahiranFile) {
+        formData.append(`files.aktaKelahiran`, pendaftarData.aktaKelahiranFile);
+      }
+      if (pendaftarData.kartuKeluargaFile) {
+        formData.append(`files.kartuKeluarga`, pendaftarData.kartuKeluargaFile);
+      }
+      if (pendaftarData.raporFile) {
+        formData.append(`files.rapor`, pendaftarData.raporFile);
+      }
+      if (pendaftarData.riwayatPenyakitFile) {
+        formData.append(`files.riwayatPenyakit`, pendaftarData.riwayatPenyakitFile);
+      }
       
       const response = await fetch(`${API_URL}/api/pendaftars`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: pendaftarData }),
+        body: formData,
       });
 
       console.log('📊 Strapi response status:', response.status);
@@ -172,7 +349,7 @@ const Daftar = () => {
     }
   };
 
-  // ✅ DIPERBAIKI: Handle submit dengan flow yang diperbaiki
+  // ✅ DIPERBAIKI: Handle submit dengan semua file
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -180,17 +357,47 @@ const Daftar = () => {
     try {
       console.log('🚀 Starting form submission...');
 
-      // Validasi field required
-      const requiredFields = [
-        'namaLengkap', 'jenisKelamin', 'tempatLahir', 'tanggalLahir', 
-        'agama', 'alamat', 'telepon', 'email', 'namaAyah', 'pekerjaanAyah',
-        'teleponAyah', 'namaIbu', 'pekerjaanIbu', 'teleponIbu', 'alamatOrtu',
-        'sekolahAsal', 'tahunLulus', 'nilaiRataRata', 'programPilihan', 'jalurPendaftaran'
-      ];
-
-      for (const field of requiredFields) {
-        if (!formData[field]) {
-          throw new Error(`Field ${field} harus diisi`);
+      // Validasi semua step sebelum submit
+      for (let step = 1; step <= 4; step++) {
+        // Simulasikan validasi per step
+        const tempErrors = {};
+        
+        switch(step) {
+          case 1:
+            if (!formData.namaLengkap.trim()) tempErrors.namaLengkap = 'Nama lengkap harus diisi';
+            if (!formData.jenisKelamin) tempErrors.jenisKelamin = 'Jenis kelamin harus dipilih';
+            if (!formData.tanggalLahir) tempErrors.tanggalLahir = 'Tanggal lahir harus diisi';
+            if (!formData.agama) tempErrors.agama = 'Agama harus dipilih';
+            if (!formData.telepon.trim()) tempErrors.telepon = 'Telepon harus diisi';
+            if (!formData.email.trim()) tempErrors.email = 'Email harus diisi';
+            if (!formData.alamat.trim()) tempErrors.alamat = 'Alamat harus diisi';
+            break;
+          case 2:
+            if (!formData.namaAyah.trim()) tempErrors.namaAyah = 'Nama ayah harus diisi';
+            if (!formData.pekerjaanAyah.trim()) tempErrors.pekerjaanAyah = 'Pekerjaan ayah harus diisi';
+            if (!formData.teleponAyah.trim()) tempErrors.teleponAyah = 'Telepon ayah harus diisi';
+            if (!formData.namaIbu.trim()) tempErrors.namaIbu = 'Nama ibu harus diisi';
+            if (!formData.pekerjaanIbu.trim()) tempErrors.pekerjaanIbu = 'Pekerjaan ibu harus diisi';
+            if (!formData.teleponIbu.trim()) tempErrors.teleponIbu = 'Telepon ibu harus diisi';
+            if (!formData.alamatOrtu.trim()) tempErrors.alamatOrtu = 'Alamat orang tua harus diisi';
+            break;
+          case 3:
+            if (!formData.sekolahAsal.trim()) tempErrors.sekolahAsal = 'Sekolah asal harus diisi';
+            if (!formData.tahunLulus) tempErrors.tahunLulus = 'Tahun lulus harus dipilih';
+            if (!formData.nilaiRataRata) tempErrors.nilaiRataRata = 'Nilai rata-rata harus diisi';
+            if (!formData.programPilihan) tempErrors.programPilihan = 'Program pilihan harus dipilih';
+            if (!formData.jalurPendaftaran) tempErrors.jalurPendaftaran = 'Jalur pendaftaran harus dipilih';
+            break;
+          case 4:
+            if (!formData.foto) tempErrors.foto = 'Foto harus diupload';
+            if (!formData.aktaKelahiran) tempErrors.aktaKelahiran = 'Akta kelahiran harus diupload';
+            if (!formData.kartuKeluarga) tempErrors.kartuKeluarga = 'Kartu keluarga harus diupload';
+            if (!formData.rapor) tempErrors.rapor = 'Rapor harus diupload';
+            break;
+        }
+        
+        if (Object.keys(tempErrors).length > 0) {
+          throw new Error(`Silakan lengkapi data di Step ${step} terlebih dahulu`);
         }
       }
 
@@ -198,47 +405,16 @@ const Daftar = () => {
       validateEnumValues();
       validateFieldLengths();
 
-      // Upload semua file ke Cloudinary
-      const uploadPromises = [];
-      const documentFields = ['foto', 'aktaKelahiran', 'kartuKeluarga', 'rapor', 'suratSehat'];
-
-      console.log('📤 Uploading documents...');
-      
-      for (const field of documentFields) {
-        if (formData[field]) {
-          uploadPromises.push(
-            uploadToCloudinary(formData[field])
-              .then(url => {
-                console.log(`✅ ${field} uploaded:`, url);
-                return { field, url };
-              })
-              .catch(error => {
-                console.error(`❌ Error uploading ${field}:`, error);
-                throw new Error(`Gagal mengupload ${field}: ${error.message}`);
-              })
-          );
-        }
-      }
-
-      // Tunggu semua upload selesai
-      const uploadResults = await Promise.all(uploadPromises);
-      
-      // Buat object untuk URL dokumen
-      const documents = {};
-      uploadResults.forEach(result => {
-        documents[result.field] = result.url;
-      });
-
       console.log('📝 Preparing data for Strapi...');
 
-      // ✅ DIPERBAIKI: Siapkan data untuk Strapi - SESUAI SCHEMA
+      // ✅ DIPERBAIKI: Siapkan data untuk Strapi - Dengan semua 5 file
       const tempNomor = `SPMB-TEMP-${Date.now()}`;
       const pendaftarData = {
-        nomorPendaftaran: tempNomor, // Temporary dulu
+        nomorPendaftaran: tempNomor,
         namaLengkap: formData.namaLengkap,
         jenisKelamin: formData.jenisKelamin,
         tempatLahir: formData.tempatLahir,
-        tanggalLahir: formData.tanggalLahir, // Schema: date (YYYY-MM-DD)
+        tanggalLahir: formData.tanggalLahir,
         agama: formData.agama,
         alamat: formData.alamat,
         telepon: formData.telepon,
@@ -251,23 +427,24 @@ const Daftar = () => {
         teleponIbu: formData.teleponIbu,
         alamatOrtu: formData.alamatOrtu,
         sekolahAsal: formData.sekolahAsal,
-        alamatSekolah: formData.alamatSekolah || '', // Bisa kosong
+        alamatSekolah: formData.alamatSekolah || '',
         tahunLulus: parseInt(formData.tahunLulus),
         nilaiRataRata: parseFloat(formData.nilaiRataRata),
         programPilihan: formData.programPilihan,
         jalurPendaftaran: formData.jalurPendaftaran,
         status: 'menunggu',
-        tanggalDaftar: new Date().toISOString(), // Schema: datetime (ISO format)
-        foto: documents.foto || null,
-        aktaKelahiran: documents.aktaKelahiran || null,
-        kartuKeluarga: documents.kartuKeluarga || null,
-        rapor: documents.rapor || null,
-        suratSehat: documents.suratSehat || null
+        tanggalDaftar: new Date().toISOString(),
+        // ✅ SEMUA 5 file untuk upload
+        fotoFile: formData.foto,
+        aktaKelahiranFile: formData.aktaKelahiran,
+        kartuKeluargaFile: formData.kartuKeluarga,
+        raporFile: formData.rapor,
+        riwayatPenyakitFile: formData.riwayatPenyakit // opsional
       };
 
-      console.log('💾 Saving to Strapi...');
+      console.log('💾 Saving to Strapi with files...');
 
-      // Simpan ke Strapi dengan nomor temporary
+      // Simpan ke Strapi dengan semua file
       const result = await saveToStrapi(pendaftarData);
 
       // ✅ DIPERBAIKI: Generate nomor pendaftaran final berdasarkan ID dari Strapi
@@ -275,7 +452,7 @@ const Daftar = () => {
 
       console.log('🔄 Updating registration number:', nomorPendaftaran);
 
-      // Update dengan nomor final
+      // Update dengan nomor final (tanpa file)
       const updateResponse = await fetch(`${API_URL}/api/pendaftars/${result.data.id}`, {
         method: 'PUT',
         headers: {
@@ -327,6 +504,25 @@ const Daftar = () => {
     { number: 5, title: 'Konfirmasi' }
   ];
 
+  // Tampilkan indikator jika form belum lengkap
+  const isStepComplete = (step) => {
+    switch(step) {
+      case 1:
+        return formData.namaLengkap && formData.jenisKelamin && formData.tanggalLahir && 
+               formData.agama && formData.telepon && formData.email && formData.alamat;
+      case 2:
+        return formData.namaAyah && formData.pekerjaanAyah && formData.teleponAyah && 
+               formData.namaIbu && formData.pekerjaanIbu && formData.teleponIbu && formData.alamatOrtu;
+      case 3:
+        return formData.sekolahAsal && formData.tahunLulus && formData.nilaiRataRata && 
+               formData.programPilihan && formData.jalurPendaftaran;
+      case 4:
+        return formData.foto && formData.aktaKelahiran && formData.kartuKeluarga && formData.rapor;
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className="pt-20 min-h-screen bg-gray-50">
       {/* Header Section */}
@@ -354,8 +550,16 @@ const Daftar = () => {
                     currentStep >= step.number 
                       ? 'bg-blue-600 border-blue-600 text-white' 
                       : 'border-gray-300 text-gray-500'
-                  } font-semibold`}>
+                  } font-semibold relative`}>
                     {step.number}
+                    {/* Indikator form lengkap */}
+                    {isStepComplete(step.number) && step.number < 5 && (
+                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
                   </div>
                   <span className={`ml-2 hidden md:block ${
                     currentStep >= step.number ? 'text-blue-600' : 'text-gray-500'
@@ -392,7 +596,17 @@ const Daftar = () => {
             {/* Step 1: Data Pribadi */}
             {currentStep === 1 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Data Pribadi Calon Siswa</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Data Pribadi Calon Siswa</h2>
+                  {isStepComplete(1) && (
+                    <span className="text-green-600 text-sm font-medium flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Data sudah lengkap
+                    </span>
+                  )}
+                </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -406,9 +620,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={100}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.namaLengkap ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Masukkan nama lengkap"
                     />
+                    {renderError('namaLengkap')}
                   </div>
 
                   <div>
@@ -420,12 +637,15 @@ const Daftar = () => {
                       value={formData.jenisKelamin}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.jenisKelamin ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Pilih Jenis Kelamin</option>
                       <option value="Laki-laki">Laki-laki</option>
                       <option value="Perempuan">Perempuan</option>
                     </select>
+                    {renderError('jenisKelamin')}
                   </div>
 
                   <div>
@@ -439,9 +659,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={50}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.tempatLahir ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Kota tempat lahir"
                     />
+                    {renderError('tempatLahir')}
                   </div>
 
                   <div>
@@ -454,8 +677,11 @@ const Daftar = () => {
                       value={formData.tanggalLahir}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.tanggalLahir ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     />
+                    {renderError('tanggalLahir')}
                   </div>
 
                   <div>
@@ -467,7 +693,9 @@ const Daftar = () => {
                       value={formData.agama}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.agama ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Pilih Agama</option>
                       <option value="Islam">Islam</option>
@@ -477,6 +705,7 @@ const Daftar = () => {
                       <option value="Buddha">Buddha</option>
                       <option value="Konghucu">Konghucu</option>
                     </select>
+                    {renderError('agama')}
                   </div>
 
                   <div>
@@ -490,9 +719,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={15}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.telepon ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="08xxxxxxxxxx"
                     />
+                    {renderError('telepon')}
                   </div>
                 </div>
 
@@ -507,9 +739,12 @@ const Daftar = () => {
                     onChange={handleInputChange}
                     required
                     maxLength={100}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                      errors.email ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="email@contoh.com"
                   />
+                  {renderError('email')}
                 </div>
 
                 <div>
@@ -523,9 +758,12 @@ const Daftar = () => {
                     required
                     rows="3"
                     maxLength={500}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                      errors.alamat ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Alamat lengkap tempat tinggal"
                   ></textarea>
+                  {renderError('alamat')}
                 </div>
               </div>
             )}
@@ -533,7 +771,17 @@ const Daftar = () => {
             {/* Step 2: Data Orang Tua */}
             {currentStep === 2 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Data Orang Tua/Wali</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Data Orang Tua/Wali</h2>
+                  {isStepComplete(2) && (
+                    <span className="text-green-600 text-sm font-medium flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Data sudah lengkap
+                    </span>
+                  )}
+                </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -547,9 +795,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={100}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.namaAyah ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Nama lengkap ayah"
                     />
+                    {renderError('namaAyah')}
                   </div>
 
                   <div>
@@ -563,9 +814,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={50}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.pekerjaanAyah ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Pekerjaan ayah"
                     />
+                    {renderError('pekerjaanAyah')}
                   </div>
 
                   <div>
@@ -579,9 +833,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={15}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.teleponAyah ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="08xxxxxxxxxx"
                     />
+                    {renderError('teleponAyah')}
                   </div>
 
                   <div>
@@ -595,9 +852,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={100}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.namaIbu ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Nama lengkap ibu"
                     />
+                    {renderError('namaIbu')}
                   </div>
 
                   <div>
@@ -611,9 +871,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={50}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.pekerjaanIbu ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Pekerjaan ibu"
                     />
+                    {renderError('pekerjaanIbu')}
                   </div>
 
                   <div>
@@ -627,9 +890,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={15}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.teleponIbu ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="08xxxxxxxxxx"
                     />
+                    {renderError('teleponIbu')}
                   </div>
                 </div>
 
@@ -644,9 +910,12 @@ const Daftar = () => {
                     required
                     rows="3"
                     maxLength={500}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                      errors.alamatOrtu ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Alamat lengkap orang tua"
                   ></textarea>
+                  {renderError('alamatOrtu')}
                 </div>
               </div>
             )}
@@ -654,7 +923,17 @@ const Daftar = () => {
             {/* Step 3: Data Akademik */}
             {currentStep === 3 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Data Akademik</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Data Akademik</h2>
+                  {isStepComplete(3) && (
+                    <span className="text-green-600 text-sm font-medium flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Data sudah lengkap
+                    </span>
+                  )}
+                </div>
                 
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
@@ -668,9 +947,12 @@ const Daftar = () => {
                       onChange={handleInputChange}
                       required
                       maxLength={100}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.sekolahAsal ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Nama sekolah sebelumnya"
                     />
+                    {renderError('sekolahAsal')}
                   </div>
 
                   <div>
@@ -682,13 +964,16 @@ const Daftar = () => {
                       value={formData.tahunLulus}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.tahunLulus ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Pilih Tahun Lulus</option>
                       {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (
                         <option key={year} value={year}>{year}</option>
                       ))}
                     </select>
+                    {renderError('tahunLulus')}
                   </div>
 
                   <div>
@@ -704,9 +989,12 @@ const Daftar = () => {
                       min="0"
                       max="100"
                       step="0.01"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.nilaiRataRata ? 'border-red-500' : 'border-gray-300'
+                      }`}
                       placeholder="Contoh: 85.5"
                     />
+                    {renderError('nilaiRataRata')}
                   </div>
 
                   <div>
@@ -718,13 +1006,16 @@ const Daftar = () => {
                       value={formData.programPilihan}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.programPilihan ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Pilih Program</option>
                       <option value="TK">TK Islam Terpadu</option>
                       <option value="SD">SD Islam Terpadu</option>
                       <option value="SMP">SMP Islam Terpadu</option>
                     </select>
+                    {renderError('programPilihan')}
                   </div>
 
                   <div className="md:col-span-2">
@@ -736,7 +1027,9 @@ const Daftar = () => {
                       value={formData.jalurPendaftaran}
                       onChange={handleInputChange}
                       required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                        errors.jalurPendaftaran ? 'border-red-500' : 'border-gray-300'
+                      }`}
                     >
                       <option value="">Pilih Jalur Pendaftaran</option>
                       <option value="reguler">Reguler</option>
@@ -744,6 +1037,7 @@ const Daftar = () => {
                       <option value="afirmasi">Jalur Afirmasi</option>
                       <option value="perpindahan">Perpindahan Orang Tua</option>
                     </select>
+                    {renderError('jalurPendaftaran')}
                   </div>
                 </div>
 
@@ -757,9 +1051,12 @@ const Daftar = () => {
                     onChange={handleInputChange}
                     rows="2"
                     maxLength={500}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none ${
+                      errors.alamatSekolah ? 'border-red-500' : 'border-gray-300'
+                    }`}
                     placeholder="Alamat lengkap sekolah asal"
                   ></textarea>
+                  {renderError('alamatSekolah')}
                 </div>
               </div>
             )}
@@ -767,7 +1064,18 @@ const Daftar = () => {
             {/* Step 4: Upload Dokumen */}
             {currentStep === 4 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Upload Dokumen Persyaratan</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800">Upload Dokumen Persyaratan</h2>
+                  {isStepComplete(4) && (
+                    <span className="text-green-600 text-sm font-medium flex items-center">
+                      <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Semua dokumen sudah diupload
+                    </span>
+                  )}
+                </div>
+                
                 <p className="text-gray-600 mb-6">
                   Upload dokumen-dokumen berikut dalam format PDF, JPG, atau PNG (maks. 2MB per file)
                 </p>
@@ -778,9 +1086,11 @@ const Daftar = () => {
                     { name: 'aktaKelahiran', label: 'Akta Kelahiran', required: true },
                     { name: 'kartuKeluarga', label: 'Kartu Keluarga (KK)', required: true },
                     { name: 'rapor', label: 'Rapor Semester Terakhir', required: true },
-                    { name: 'suratSehat', label: 'Surat Keterangan Sehat', required: true }
-                  ].map((doc, index) => (
-                    <div key={doc.name} className="border border-gray-200 rounded-lg p-4">
+                    { name: 'riwayatPenyakit', label: 'Surat Riwayat Penyakit (Opsional)', required: false }
+                  ].map((doc) => (
+                    <div key={doc.name} className={`border rounded-lg p-4 ${
+                      errors[doc.name] ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                    }`}>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         {doc.label} {doc.required && '*'}
                       </label>
@@ -794,13 +1104,25 @@ const Daftar = () => {
                           className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                         />
                         {formData[doc.name] && (
-                          <span className="text-green-600 text-sm font-medium">
-                            ✓ Terupload
+                          <span className="text-green-600 text-sm font-medium flex items-center">
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            Terupload
                           </span>
                         )}
                       </div>
+                      {errors[doc.name] && (
+                        <p className="text-red-600 text-xs mt-2 flex items-center">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                          {errors[doc.name]}
+                        </p>
+                      )}
                       <p className="text-xs text-gray-500 mt-2">
-                        Format: PDF, JPG, PNG (maks. 2MB)
+                        Format: PDF, JPG, PNG (maks. 2MB){' '}
+                        {!doc.required && <span className="text-blue-600">(Opsional)</span>}
                       </p>
                     </div>
                   ))}
@@ -865,11 +1187,11 @@ const Daftar = () => {
                         { name: 'aktaKelahiran', label: 'Akta Kelahiran' },
                         { name: 'kartuKeluarga', label: 'Kartu Keluarga' },
                         { name: 'rapor', label: 'Rapor' },
-                        { name: 'suratSehat', label: 'Surat Sehat' }
+                        { name: 'riwayatPenyakit', label: 'Surat Riwayat Penyakit' }
                       ].map(doc => (
                         <p key={doc.name}>
                           <span className="text-gray-600">{doc.label}:</span>{' '}
-                          {formData[doc.name] ? '✓ Terupload' : '✗ Belum upload'}
+                          {formData[doc.name] ? '✓ Terupload' : doc.name === 'riwayatPenyakit' ? '✓ Opsional' : '✗ Belum upload'}
                         </p>
                       ))}
                     </div>
@@ -912,7 +1234,12 @@ const Daftar = () => {
                   <button
                     type="button"
                     onClick={nextStep}
-                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                    className={`px-8 py-3 rounded-lg transition-colors font-medium ${
+                      isStepComplete(currentStep) 
+                        ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    }`}
+                    disabled={!isStepComplete(currentStep)}
                   >
                     Lanjut
                   </button>
@@ -949,7 +1276,7 @@ const Daftar = () => {
                   <li>• Setelah submit, Anda akan mendapatkan nomor pendaftaran</li>
                   <li>• Proses seleksi membutuhkan waktu 3-5 hari kerja</li>
                   <li>• Hasil seleksi akan diumumkan melalui email dan website</li>
-                  <li>• Untuk pertanyaan, hubungi: (022) 1234-5678</li>
+                  <li>• Untuk pertanyaan, hubungi: 0853-6826-2156</li>
                 </ul>
               </div>
             </div>

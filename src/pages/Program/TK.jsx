@@ -13,6 +13,11 @@ const TK = () => {
   const [sertifikatRef, sertifikatVisible] = useScrollAnimation(0.2);
   
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // State untuk prestasi TK
+  const [tkAchievements, setTkAchievements] = useState([]);
+  const [loadingAchievements, setLoadingAchievements] = useState(true);
+  const [achievementError, setAchievementError] = useState(null);
 
   // Multiple background images untuk TK
   const backgroundImages = [
@@ -31,6 +36,212 @@ const TK = () => {
     
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
+
+  // Konfigurasi Strapi
+  const STRAPI_CONFIG = {
+    URL: 'https://incredible-sparkle-f34960cd1e.strapiapp.com',
+  };
+
+  // Fungsi untuk mendapatkan URL gambar
+  const getImageUrl = (imageData) => {
+    if (!imageData) return 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
+    
+    let imageUrl = 'https://images.unsplash.com/photo-1516627145497-ae69578cfc06?auto=format&fit=crop&w=800&q=80';
+    
+    if (imageData.data?.attributes?.url) {
+      const url = imageData.data.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    else if (imageData.attributes?.url) {
+      const url = imageData.attributes.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    else if (imageData.url) {
+      const url = imageData.url;
+      imageUrl = url.startsWith('http') ? url : `${STRAPI_CONFIG.URL}${url}`;
+    }
+    
+    return imageUrl;
+  };
+
+  // Fetch prestasi TK dari Strapi
+  useEffect(() => {
+    const fetchTKAchievements = async () => {
+      try {
+        setLoadingAchievements(true);
+        setAchievementError(null);
+        
+        const response = await fetch(
+          `${STRAPI_CONFIG.URL}/api/prestasis?filters[jenjang][$eq]=tk&populate=*&sort=date:desc`
+        );
+        
+        const data = await response.json();
+        
+        // Jika ada masalah, pakai fallback data
+        if (!data || !data.data || !Array.isArray(data.data) || data.data.length === 0) {
+          // Data fallback untuk TK
+          const fallbackData = [
+            {
+              id: 1,
+              title: "Juara 1 Lomba Mewarnai Tingkat Kota",
+              description: "Ananda Rara berhasil meraih juara 1 dalam lomba mewarnai tingkat kota yang diikuti oleh 50 peserta dari berbagai TK.",
+              category: "seni",
+              level: "kota",
+              participants: "Ananda Rara",
+              year: "2024",
+              date: "2024-01-15"
+            },
+            {
+              id: 2,
+              title: "Peserta Terbaik Lomba Menari",
+              description: "Kelompok tari TK meraih predikat peserta terbaik dalam festival seni anak usia dini.",
+              category: "seni",
+              level: "kota",
+              participants: "Kelompok Tari TK",
+              year: "2024",
+              date: "2024-05-12"
+            },
+            {
+              id: 3,
+              title: "Juara 2 Lomba Hafalan Doa Harian",
+              description: "Siswa TK berhasil menghafal 15 doa harian dengan lancar dan meraih juara 2.",
+              category: "akademik",
+              level: "kota",
+              participants: "Muhammad Fahri",
+              year: "2024",
+              date: "2024-03-20"
+            }
+          ];
+          
+          setTkAchievements(fallbackData);
+          return;
+        }
+
+        // Proses data Strapi
+        const formattedAchievements = data.data.map((item) => {
+          const itemData = item.attributes || item;
+          
+          if (!itemData || !itemData.title) {
+            console.warn('Skipping invalid item:', item);
+            return null;
+          }
+          
+          let year = '2024';
+          try {
+            if (itemData.date) {
+              year = new Date(itemData.date).getFullYear().toString();
+            }
+          } catch (e) {
+            console.warn('Date error:', e);
+          }
+          
+          return {
+            id: item.id,
+            title: itemData.title,
+            description: itemData.description || 'No description',
+            image: getImageUrl(itemData.image),
+            category: itemData.category || 'lainnya',
+            level: itemData.level || 'sekolah',
+            date: itemData.date || '2024-01-01',
+            participants: itemData.participants || '',
+            year: year,
+            jenjang: itemData.jenjang || 'tk'
+          };
+        }).filter(Boolean);
+        
+        setTkAchievements(formattedAchievements);
+        
+      } catch (err) {
+        console.error('Fetch error:', err);
+        setAchievementError(`Gagal memuat data prestasi: ${err.message}`);
+        
+        // Tetap tampilkan data fallback
+        const fallbackData = [
+          {
+            id: 1,
+            title: "Juara 1 Lomba Mewarnai Tingkat Kota",
+            description: "Ananda Rara berhasil meraih juara 1 dalam lomba mewarnai tingkat kota yang diikuti oleh 50 peserta dari berbagai TK.",
+            category: "seni",
+            level: "kota",
+            participants: "Ananda Rara",
+            year: "2024",
+            date: "2024-01-15"
+          },
+          {
+            id: 2,
+            title: "Peserta Terbaik Lomba Menari",
+            description: "Kelompok tari TK meraih predikat peserta terbaik dalam festival seni anak usia dini.",
+            category: "seni",
+            level: "kota",
+            participants: "Kelompok Tari TK",
+            year: "2024",
+            date: "2024-05-12"
+          }
+        ];
+        
+        setTkAchievements(fallbackData);
+      } finally {
+        setLoadingAchievements(false);
+      }
+    };
+
+    fetchTKAchievements();
+  }, []);
+
+  // Fungsi untuk render badge berdasarkan kategori
+  const getCategoryBadge = (category) => {
+    const colors = {
+      akademik: 'bg-blue-100 text-blue-800',
+      olahraga: 'bg-green-100 text-green-800',
+      seni: 'bg-purple-100 text-purple-800',
+      teknologi: 'bg-orange-100 text-orange-800',
+      lainnya: 'bg-gray-100 text-gray-800'
+    };
+    
+    const icons = {
+      akademik: '📚',
+      olahraga: '⚽',
+      seni: '🎨',
+      teknologi: '💻',
+      lainnya: '🏆'
+    };
+    
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${colors[category] || colors.lainnya}`}>
+        {icons[category] || icons.lainnya} {category}
+      </span>
+    );
+  };
+
+  // Fungsi untuk render badge berdasarkan level
+  const getLevelBadge = (level) => {
+    const colors = {
+      sekolah: 'bg-yellow-100 text-yellow-800',
+      kota: 'bg-indigo-100 text-indigo-800',
+      provinsi: 'bg-pink-100 text-pink-800',
+      nasional: 'bg-red-100 text-red-800',
+      internasional: 'bg-teal-100 text-teal-800'
+    };
+    
+    return (
+      <span className={`px-3 py-1 rounded-full text-xs font-medium ${colors[level] || colors.sekolah}`}>
+        {level}
+      </span>
+    );
+  };
+
+  // Fungsi untuk render badge juara
+  const getAchievementBadge = (title) => {
+    if (title.includes("Juara 1")) {
+      return <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold border border-yellow-200">JUARA UTAMA</span>;
+    } else if (title.includes("Juara 2")) {
+      return <span className="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold border border-gray-200">JUARA II</span>;
+    } else if (title.includes("Juara 3")) {
+      return <span className="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold border border-amber-200">JUARA III</span>;
+    } else {
+      return <span className="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-xs font-semibold border border-orange-200">PENGHARGAAN</span>;
+    }
+  };
 
   return (
     <div className="pt-20">
@@ -435,6 +646,272 @@ const TK = () => {
                 </p>
               </div>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Prestasi & Penghargaan Section */}
+      <section className="py-20 bg-gradient-to-br from-amber-50 to-orange-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            whileInView="animate"
+            viewport={{ once: true, amount: 0.1 }}
+            variants={staggerContainer}
+            className="max-w-6xl mx-auto"
+          >
+            {/* Section Header */}
+            <motion.div 
+              variants={fadeInUp}
+              className="text-center mb-16"
+            >
+              <div className="inline-block bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 border border-amber-200 mb-4">
+                <span className="text-amber-600 font-semibold text-lg">🏆 PRESTASI SISWA TK</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Prestasi Gemilang TK Mutiara Al-Madani
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-amber-400 to-orange-500 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Pencapaian membanggakan siswa-siswi kami dalam berbagai kompetisi dan program
+              </p>
+            </motion.div>
+
+            {/* Error Message */}
+            {achievementError && (
+              <motion.div 
+                variants={fadeInUp}
+                className="bg-yellow-50 border border-yellow-200 rounded-2xl p-6 mb-8"
+              >
+                <div className="flex items-center">
+                  <div className="text-yellow-600 text-2xl mr-4">⚠️</div>
+                  <div>
+                    <p className="text-yellow-800 font-medium">Perhatian: {achievementError}</p>
+                    <p className="text-yellow-700 text-sm mt-1">
+                      Menampilkan data contoh. Data asli akan ditampilkan saat koneksi tersedia.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Loading State */}
+            {loadingAchievements ? (
+              <motion.div
+                variants={fadeInUp}
+                className="bg-white rounded-3xl p-12 shadow-2xl border border-amber-200 text-center"
+              >
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-600 mx-auto mb-6"></div>
+                <h3 className="text-2xl font-bold text-gray-800 mb-3">Memuat Data Prestasi</h3>
+                <p className="text-gray-600">Sedang mengambil data prestasi terbaru dari server...</p>
+              </motion.div>
+            ) : (
+              <>
+                {/* Prestasi Terbaru */}
+                <motion.div
+                  variants={fadeInUp}
+                  className="bg-white rounded-3xl p-8 shadow-2xl border border-amber-200 mb-12"
+                >
+                  <div className="flex items-center mb-8">
+                    <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl flex items-center justify-center text-white text-2xl mr-4">
+                      🎖️
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-bold text-gray-800">
+                        Prestasi Terbaru Siswa TK ({tkAchievements.length})
+                      </h3>
+                      <p className="text-gray-600 mt-2">
+                        Berbagai penghargaan yang diraih oleh siswa-siswi TK Mutiara Al-Madani
+                      </p>
+                    </div>
+                  </div>
+
+                  {tkAchievements.length > 0 ? (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {tkAchievements.map((prestasi, index) => (
+                        <div key={prestasi.id} className="group bg-gradient-to-br from-gray-50 to-amber-50 rounded-2xl p-6 border border-amber-100 hover:border-amber-300 transition-all duration-300 hover:shadow-lg">
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <div className="flex items-center mb-2">
+                                <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-white text-sm mr-3">
+                                  {index + 1}
+                                </div>
+                                <h4 className="text-lg font-bold text-gray-800 line-clamp-2">{prestasi.title}</h4>
+                              </div>
+                              
+                              <div className="ml-11 space-y-2">
+                                {/* Kategori */}
+                                <div className="flex items-center text-sm">
+                                  <span className="w-20 text-gray-500 font-medium flex-shrink-0">Kategori:</span>
+                                  <div className="flex-1">
+                                    {getCategoryBadge(prestasi.category)}
+                                  </div>
+                                </div>
+                                
+                                {/* Tingkat */}
+                                <div className="flex items-center text-sm">
+                                  <span className="w-20 text-gray-500 font-medium flex-shrink-0">Tingkat:</span>
+                                  <div className="flex-1">
+                                    {getLevelBadge(prestasi.level)}
+                                  </div>
+                                </div>
+                                
+                                {/* Peserta */}
+                                {prestasi.participants && prestasi.participants.trim() !== '' && (
+                                  <div className="flex items-center text-sm">
+                                    <span className="w-20 text-gray-500 font-medium flex-shrink-0">Peserta:</span>
+                                    <span className="text-gray-700 font-medium flex-1 truncate">{prestasi.participants}</span>
+                                  </div>
+                                )}
+                                
+                                {/* Tahun */}
+                                <div className="flex items-center text-sm">
+                                  <span className="w-20 text-gray-500 font-medium flex-shrink-0">Tahun:</span>
+                                  <span className="text-gray-700 font-semibold flex-1">{prestasi.year}</span>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Badge Juara */}
+                            <div className="flex-shrink-0 ml-4">
+                              {getAchievementBadge(prestasi.title)}
+                            </div>
+                          </div>
+                          
+                          {/* Deskripsi */}
+                          <div className="mt-4 pt-4 border-t border-amber-200">
+                            <p className="text-sm text-gray-600 leading-relaxed line-clamp-3">{prestasi.description}</p>
+                          </div>
+                          
+                          {/* Tanggal */}
+                          <div className="mt-4 pt-3 border-t border-amber-100">
+                            <div className="flex items-center text-xs text-gray-500">
+                              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              {prestasi.date ? new Date(prestasi.date).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'long',
+                                year: 'numeric'
+                              }) : '2024'}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">🏆</div>
+                      <h4 className="text-xl font-semibold text-gray-700 mb-2">
+                        Belum ada data prestasi
+                      </h4>
+                      <p className="text-gray-500 max-w-md mx-auto">
+                        Data prestasi siswa TK akan ditampilkan di sini. Hubungi administrasi untuk menambahkan data prestasi.
+                      </p>
+                    </div>
+                  )}
+                </motion.div>
+
+                {/* Statistik Prestasi */}
+                {tkAchievements.length > 0 && (
+                  <motion.div
+                    variants={fadeInUp}
+                    className="bg-gradient-to-br from-orange-500 to-red-600 rounded-3xl p-8 shadow-2xl text-white mb-12"
+                  >
+                    <div className="flex items-center mb-8">
+                      <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600 text-2xl mr-4">
+                        📊
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold">Statistik Prestasi TK</h3>
+                        <p className="text-orange-100 mt-2">
+                          Ringkasan pencapaian siswa-siswi TK Mutiara Al-Madani
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                      {/* Total Prestasi */}
+                      <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div className="text-4xl font-bold mb-2">{tkAchievements.length}</div>
+                        <div className="text-sm text-orange-100 font-medium">Total Prestasi</div>
+                      </div>
+                      
+                      {/* Prestasi Seni */}
+                      <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div className="text-4xl font-bold mb-2">
+                          {tkAchievements.filter(p => p.category === 'seni').length}
+                        </div>
+                        <div className="text-sm text-orange-100 font-medium">Prestasi Seni</div>
+                      </div>
+                      
+                      {/* Tingkat Nasional/Provinsi */}
+                      <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div className="text-4xl font-bold mb-2">
+                          {tkAchievements.filter(p => p.level === 'nasional' || p.level === 'provinsi').length}
+                        </div>
+                        <div className="text-sm text-orange-100 font-medium">Tingkat Nasional/Provinsi</div>
+                      </div>
+                      
+                      {/* Tahun Berprestasi */}
+                      <div className="text-center bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+                        <div className="text-4xl font-bold mb-2">
+                          {new Set(tkAchievements.map(p => p.year)).size}
+                        </div>
+                        <div className="text-sm text-orange-100 font-medium">Tahun Berprestasi</div>
+                      </div>
+                    </div>
+
+                    {/* Distribusi Kategori */}
+                    <div className="mt-8 pt-6 border-t border-white/20">
+                      <h4 className="text-xl font-bold mb-4 text-center">Distribusi Berdasarkan Kategori</h4>
+                      <div className="flex flex-wrap justify-center gap-4">
+                        {['seni', 'akademik', 'olahraga', 'lainnya'].map((category) => {
+                          const count = tkAchievements.filter(p => p.category === category).length;
+                          if (count === 0) return null;
+                          
+                          const percentage = Math.round((count / tkAchievements.length) * 100);
+                          
+                          return (
+                            <div key={category} className="flex items-center bg-white/10 rounded-full px-4 py-2">
+                              <span className="text-lg mr-2">
+                                {category === 'seni' ? '🎨' : 
+                                 category === 'akademik' ? '📚' : 
+                                 category === 'olahraga' ? '⚽' : '🏆'}
+                              </span>
+                              <span className="font-medium mr-2">
+                                {category.charAt(0).toUpperCase() + category.slice(1)}
+                              </span>
+                              <span className="text-yellow-300 font-bold">{percentage}%</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Link ke halaman prestasi lengkap */}
+                <motion.div
+                  variants={fadeInUp}
+                  className="text-center"
+                >
+                  <Link
+                    to="/achievement#tk"
+                    className="inline-flex items-center justify-center bg-gradient-to-r from-amber-500 to-orange-500 text-white px-8 py-4 rounded-full font-bold text-lg hover:from-amber-600 hover:to-orange-600 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                  >
+                    <span className="mr-3">🏆</span>
+                    Lihat Semua Prestasi TK
+                    <svg className="w-5 h-5 ml-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+                  </Link>
+                  <p className="text-gray-600 mt-4 text-sm">
+                    Jelajahi lebih banyak prestasi dan detail lengkap di halaman prestasi utama
+                  </p>
+                </motion.div>
+              </>
+            )}
           </motion.div>
         </div>
       </section>

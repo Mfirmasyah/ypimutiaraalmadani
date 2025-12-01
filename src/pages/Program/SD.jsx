@@ -635,7 +635,7 @@ const SD = () => {
                   color: "from-green-500 to-green-600"
                 },
                 {
-                  title: "Kegiatan Tabliq",
+                  title: "Kegiatan Tabligh",
                   description: "Kegiatan yang terjadwal,terencana dan beragam untuk meningkatkan peduli sosial,kemandirian,kesehatan & keamanan peserta didik",
                   features: [""],
                   icon: "",
@@ -756,7 +756,7 @@ const SD = () => {
                   </div>
                   <div>
                     <h3 className="text-3xl font-bold">Kurikulum Nasional</h3>
-                    <p className="text-green-100 font-semibold">Kurikulum 2013 (K13) yang Disempurnakan</p>
+                    <p className="text-green-100 font-semibold">Kurikulum K13 Gabungan Kurikulum Merdeka</p>
                   </div>
                 </div>
                 
@@ -770,8 +770,8 @@ const SD = () => {
                         "Bahasa Indonesia",
                         "Matematika",
                         "Bahasa Inggris",
-                        "Ilmu Pengetahuan Alam (IPA)",
-                        "Ilmu Pengetahuan Sosial (IPS)",
+                        "Ilmu Pengetahuan Alam & Sosial(IPAs)",
+                        "Mulok (Seni Budaya Daerah)",
                         "Seni Budaya dan Prakarya",
                         "Pendidikan Jasmani, Olahraga dan Kesehatan"
                       ].map((subject, index) => (

@@ -37,42 +37,266 @@ const Info = () => {
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
 
-  // Function untuk calculate status berdasarkan tanggal
+  // Helper untuk mendapatkan nama bulan Indonesia
+  const getMonthName = (monthIndex) => {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ];
+    return months[monthIndex];
+  };
+
+  // ✅ PERBAIKAN: Function untuk parse tanggal Indonesia dengan benar
+  const parseIndonesianDate = (dateString) => {
+    try {
+      console.log('🔍 Parsing date string:', dateString);
+      
+      // Jika hanya angka, ini kemungkinan hanya tanggal saja (dalam format range)
+      const trimmedStr = dateString.trim();
+      if (/^\d{1,2}$/.test(trimmedStr)) {
+        console.log('⚠️  Only day number detected, using current month/year as fallback');
+        const today = new Date();
+        const day = parseInt(trimmedStr);
+        // Buat tanggal dengan hari ini, bulan dan tahun saat ini
+        const date = new Date(today.getFullYear(), today.getMonth(), day, 0, 0, 0, 0);
+        console.log('✅ Created date from day only:', date.toLocaleDateString('id-ID'));
+        return date;
+      }
+      
+      // Mapping bulan Indonesia ke angka bulan (0-11)
+      const monthMap = {
+        'januari': 0, 'jan': 0,
+        'februari': 1, 'feb': 1,
+        'maret': 2, 'mar': 2,
+        'april': 3, 'apr': 3,
+        'mei': 4, 'may': 4,
+        'juni': 5, 'jun': 5,
+        'juli': 6, 'jul': 6,
+        'agustus': 7, 'agu': 7, 'aug': 7,
+        'september': 8, 'sep': 8,
+        'oktober': 9, 'okt': 9, 'oct': 9,
+        'november': 10, 'nov': 10,
+        'desember': 11, 'des': 11, 'dec': 11
+      };
+
+      // Hilangkan spasi berlebih dan lowercase
+      const cleanStr = dateString.toLowerCase().trim();
+      
+      // Cari tahun
+      const yearMatch = cleanStr.match(/(\d{4})/);
+      let year = yearMatch ? parseInt(yearMatch[1]) : new Date().getFullYear();
+      
+      console.log('🔍 Found year:', year);
+      
+      // Cari bulan
+      let month = -1;
+      let monthNameFound = '';
+      for (const [monthName, monthNum] of Object.entries(monthMap)) {
+        if (cleanStr.includes(monthName)) {
+          month = monthNum;
+          monthNameFound = monthName;
+          break;
+        }
+      }
+      
+      // Jika tidak menemukan bulan, coba gunakan bulan saat ini
+      if (month === -1) {
+        console.log('⚠️  No month found, using current month');
+        month = new Date().getMonth();
+        monthNameFound = 'current month';
+      }
+      
+      console.log('🔍 Found month:', month, '(', monthNameFound, ')');
+      
+      // Cari tanggal (angka 1-2 digit) - cari angka pertama
+      let day = 1;
+      const dayMatch = cleanStr.match(/(\d{1,2})/);
+      if (dayMatch) {
+        day = parseInt(dayMatch[1]);
+      }
+      
+      console.log('🔍 Found day:', day);
+      
+      // Validasi
+      if (day < 1 || day > 31) {
+        console.warn('❌ Invalid day:', day, 'in date string:', dateString);
+        return new Date(NaN);
+      }
+      
+      // Buat date object (set ke jam 00:00:00)
+      const date = new Date(year, month, day, 0, 0, 0, 0);
+      
+      // Validasi hasil parsing
+      if (isNaN(date.getTime())) {
+        console.warn('❌ Invalid date after parsing:', dateString);
+        return new Date(NaN);
+      }
+      
+      console.log('✅ Successfully parsed date:', {
+        original: dateString,
+        parsed: date.toLocaleDateString('id-ID'),
+        year, month, day
+      });
+      
+      return date;
+    } catch (error) {
+      console.error('❌ Error parsing date:', error);
+      return new Date(NaN);
+    }
+  };
+
+  // ✅ PERBAIKAN: Function untuk extract bulan dan tahun dari string tanggal
+  const extractMonthAndYear = (dateString) => {
+    const monthMap = {
+      'januari': 'Januari', 'jan': 'Januari',
+      'februari': 'Februari', 'feb': 'Februari',
+      'maret': 'Maret', 'mar': 'Maret',
+      'april': 'April', 'apr': 'April',
+      'mei': 'Mei', 'may': 'Mei',
+      'juni': 'Juni', 'jun': 'Juni',
+      'juli': 'Juli', 'jul': 'Juli',
+      'agustus': 'Agustus', 'agu': 'Agustus', 'aug': 'Agustus',
+      'september': 'September', 'sep': 'September',
+      'oktober': 'Oktober', 'okt': 'Oktober', 'oct': 'Oktober',
+      'november': 'November', 'nov': 'November',
+      'desember': 'Desember', 'des': 'Desember', 'dec': 'Desember'
+    };
+
+    const cleanStr = dateString.toLowerCase();
+    
+    // Cari bulan
+    let monthName = '';
+    for (const [key, value] of Object.entries(monthMap)) {
+      if (cleanStr.includes(key)) {
+        monthName = value;
+        break;
+      }
+    }
+    
+    // Cari tahun
+    const yearMatch = cleanStr.match(/(\d{4})/);
+    const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+    
+    return { monthName, year };
+  };
+
+  // ✅ PERBAIKAN TELAH DIPERBAIKI: Function untuk calculate status berdasarkan tanggal
   const calculateTimelineStatus = (dateRange) => {
     const now = new Date();
     
     try {
-      // Handle berbagai format tanggal
+      // Handle tanggal kosong
       if (!dateRange || dateRange === 'Tanggal belum ditentukan') {
         return 'upcoming';
       }
       
-      // Split date range (format: "1 Jan - 28 Feb 2025")
-      const dates = dateRange.split(' - ');
-      if (dates.length !== 2) return 'upcoming';
+      console.log('🔍 Processing date range:', dateRange);
       
-      const [startStr, endStr] = dates;
+      // PERBAIKAN UTAMA: Handle en dash (–) dengan berbagai kemungkinan separator
+      let normalizedRange = dateRange;
       
-      // Parse dates (sederhana - bisa diperbaiki dengan library seperti date-fns)
-      const currentYear = new Date().getFullYear();
-      const startDate = new Date(`${startStr} ${currentYear}`);
-      const endDate = new Date(`${endStr} ${currentYear}`);
+      // Replace en dash (–) dengan regular dash (-) untuk parsing
+      if (dateRange.includes('–')) {
+        console.log('🔍 Detected en dash, normalizing...');
+        normalizedRange = dateRange.replace(/–/g, '-');
+      }
       
-      // Jika parsing gagal, return upcoming
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      // Juga handle jika ada double dash atau spasi tidak konsisten
+      normalizedRange = normalizedRange.replace(/\s+/g, ' ').trim();
+      
+      console.log('🔍 Normalized date range:', normalizedRange);
+      
+      // Split dengan berbagai kemungkinan separator
+      let parts;
+      if (normalizedRange.includes(' - ')) {
+        parts = normalizedRange.split(' - ');
+      } else if (normalizedRange.includes('-')) {
+        parts = normalizedRange.split('-').map(s => s.trim());
+      } else {
+        console.warn('❌ Cannot parse date range (no separator):', dateRange);
         return 'upcoming';
       }
       
-      if (now > endDate) return 'completed';
-      if (now >= startDate && now <= endDate) return 'active';
-      return 'upcoming';
+      console.log('🔍 Split parts:', parts);
+      
+      if (!parts || parts.length < 2) {
+        console.warn('❌ Cannot parse date range:', dateRange);
+        return 'upcoming';
+      }
+      
+      let [startStr, endStr] = parts.map(s => s.trim());
+      
+      console.log('🔍 Start:', startStr, 'End:', endStr);
+      
+      // PERBAIKAN KHUSUS: Jika start hanya angka, ambil bulan dan tahun dari end
+      if (/^\d{1,2}$/.test(startStr)) {
+        console.log('⚠️  Start only contains day number, extracting month/year from end');
+        const { monthName, year } = extractMonthAndYear(endStr);
+        
+        if (monthName) {
+          const originalStart = startStr;
+          startStr = `${startStr} ${monthName} ${year}`;
+          console.log(`✅ Adjusted start: "${originalStart}" → "${startStr}"`);
+        } else {
+          console.warn('⚠️  Could not extract month from end string');
+        }
+      }
+      
+      // Parse tanggal
+      const startDate = parseIndonesianDate(startStr);
+      let endDate = parseIndonesianDate(endStr);
+      
+      // Set endDate ke jam 23:59:59.999
+      if (!isNaN(endDate.getTime())) {
+        endDate = new Date(endDate);
+        endDate.setHours(23, 59, 59, 999);
+      }
+      
+      // Validasi parsing
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        console.warn('❌ Failed to parse dates:', {
+          original: dateRange,
+          adjustedStart: startStr,
+          endStr,
+          startDate,
+          endDate
+        });
+        return 'upcoming';
+      }
+      
+      // Debug logging
+      console.log('📅 Date Calculation:', {
+        input: dateRange,
+        normalized: normalizedRange,
+        now: now.toLocaleDateString('id-ID'),
+        start: startDate.toLocaleDateString('id-ID'),
+        end: endDate.toLocaleDateString('id-ID'),
+        nowTime: now.getTime(),
+        startTime: startDate.getTime(),
+        endTime: endDate.getTime(),
+        isPast: now.getTime() > endDate.getTime(),
+        isActive: now.getTime() >= startDate.getTime() && now.getTime() <= endDate.getTime()
+      });
+      
+      // Determine status
+      if (now.getTime() > endDate.getTime()) {
+        console.log('✅ Status: COMPLETED - Date has passed');
+        return 'completed';
+      } else if (now.getTime() >= startDate.getTime() && now.getTime() <= endDate.getTime()) {
+        console.log('✅ Status: ACTIVE - Currently within date range');
+        return 'active';
+      } else {
+        console.log('✅ Status: UPCOMING - Future date');
+        return 'upcoming';
+      }
+      
     } catch (error) {
-      console.error('Error calculating timeline status:', error);
+      console.error('❌ Error calculating timeline status:', error);
       return 'upcoming';
     }
   };
 
-  // Function untuk calculate progress berdasarkan tanggal
+  // ✅ PERBAIKAN: Function untuk calculate progress
   const calculateProgress = (dateRange) => {
     const now = new Date();
     
@@ -81,30 +305,64 @@ const Info = () => {
         return 0;
       }
       
-      const dates = dateRange.split(' - ');
-      if (dates.length !== 2) return 0;
+      // Normalize en dash
+      let normalizedRange = dateRange;
+      if (dateRange.includes('–')) {
+        normalizedRange = dateRange.replace(/–/g, '-');
+      }
       
-      const [startStr, endStr] = dates;
-      const currentYear = new Date().getFullYear();
-      const startDate = new Date(`${startStr} ${currentYear}`);
-      const endDate = new Date(`${endStr} ${currentYear}`);
+      // Split dengan berbagai kemungkinan separator
+      let parts;
+      if (normalizedRange.includes(' - ')) {
+        parts = normalizedRange.split(' - ');
+      } else if (normalizedRange.includes('-')) {
+        parts = normalizedRange.split('-').map(s => s.trim());
+      } else {
+        return 0;
+      }
+      
+      if (parts.length !== 2) return 0;
+      
+      let [startStr, endStr] = parts.map(s => s.trim());
+      
+      // PERBAIKAN KHUSUS: Jika start hanya angka, ambil bulan dan tahun dari end
+      if (/^\d{1,2}$/.test(startStr)) {
+        const { monthName, year } = extractMonthAndYear(endStr);
+        if (monthName) {
+          startStr = `${startStr} ${monthName} ${year}`;
+        }
+      }
+      
+      const startDate = parseIndonesianDate(startStr);
+      let endDate = parseIndonesianDate(endStr);
+      
+      // Set endDate ke jam 23:59:59.999
+      if (!isNaN(endDate.getTime())) {
+        endDate = new Date(endDate);
+        endDate.setHours(23, 59, 59, 999);
+      }
       
       if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
         return 0;
       }
       
-      const totalDuration = endDate - startDate;
-      const elapsed = now - startDate;
+      // Cek jika sudah lewat atau belum dimulai
+      if (now.getTime() > endDate.getTime()) return 100;
+      if (now.getTime() < startDate.getTime()) return 0;
       
-      // Return progress antara 0-100
-      return Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
+      // Hitung progress
+      const totalDuration = endDate.getTime() - startDate.getTime();
+      const elapsed = now.getTime() - startDate.getTime();
+      const progress = Math.min(Math.max((elapsed / totalDuration) * 100, 0), 100);
+      
+      return Math.round(progress * 10) / 10; // Round to 1 decimal
     } catch (error) {
-      console.error('Error calculating progress:', error);
+      console.error('❌ Error calculating progress:', error);
       return 0;
     }
   };
 
-  // Fetch Timeline Data dari Strapi - VERSI DIPERBAIKI
+  // Fetch Timeline Data dari Strapi
   useEffect(() => {
     const fetchTimelineData = async () => {
       try {
@@ -112,7 +370,6 @@ const Info = () => {
         
         console.log('🚀 Fetching timeline from:', `${API_URL}/api/timelines?sort=order:asc`);
         
-        // ✅ DIPERBAIKI: Hapus populate=* karena tidak ada gambar
         const response = await fetch(`${API_URL}/api/timelines?sort=order:asc`);
         
         if (!response.ok) {
@@ -126,11 +383,9 @@ const Info = () => {
         let items = [];
         
         if (data.data && Array.isArray(data.data)) {
-          // Struktur: { data: [...] }
           items = data.data;
           console.log('✅ Using data.data structure');
         } else if (Array.isArray(data)) {
-          // Struktur: [...]
           items = data;
           console.log('✅ Using direct array structure');
         } else {
@@ -139,30 +394,30 @@ const Info = () => {
         
         console.log('📋 Items found:', items.length);
         
-        // Transform data - VERSI DIPERBAIKI
+        // Transform data
         const transformedData = items.map((item, index) => {
           // Cek berbagai kemungkinan struktur item
           const attributes = item.attributes || item.data || item;
           
-          console.log('🔧 Processing item:', attributes);
+          console.log(`🔧 Processing item ${index + 1}:`, {
+            id: item.id,
+            attributes: attributes
+          });
           
-          // ✅ DIPERBAIKI: Field names sesuai schema - sederhanakan
           const order = attributes.order || (index + 1);
           const phase = attributes.phase || `Phase ${index + 1}`;
           const dateRange = attributes.dateRange || 'Tanggal belum ditentukan';
           const description = attributes.description || 'Deskripsi belum tersedia';
           
-          // ✅ DIPERBAIKI: Validasi required fields
-          if (!attributes.phase || !attributes.dateRange) {
-            console.warn('❌ Timeline item missing required fields:', attributes);
-            return null;
-          }
+          console.log(`   📅 Date range: "${dateRange}"`);
           
-          // Hitung status berdasarkan tanggal, bukan hanya order
+          // Hitung status berdasarkan tanggal
           const status = calculateTimelineStatus(dateRange);
           const isActive = status === 'active';
           const isCompleted = status === 'completed';
           const progress = calculateProgress(dateRange);
+          
+          console.log(`   📊 Status calculated: ${status} (active: ${isActive}, completed: ${isCompleted})`);
           
           return {
             id: item.id || `timeline-${index + 1}`,
@@ -175,7 +430,7 @@ const Info = () => {
             isCompleted: isCompleted,
             progress: progress
           };
-        }).filter(Boolean); // ✅ DIPERBAIKI: Filter out null items
+        }).filter(Boolean);
         
         // Sort by order
         transformedData.sort((a, b) => a.order - b.order);
@@ -199,34 +454,45 @@ const Info = () => {
   // Fallback data jika Strapi tidak tersedia
   const getFallbackTimelineData = () => {
     const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
+    
+    // Buat tanggal untuk testing - GUNAKAN EN DASH UNTUK KONSISTENSI
+    const today = new Date();
+    const pastDate1 = new Date(today);
+    pastDate1.setDate(today.getDate() - 30); // 30 hari lalu
+    const pastDate2 = new Date(today);
+    pastDate2.setDate(today.getDate() - 15); // 15 hari lalu
+    
+    const futureDate1 = new Date(today);
+    futureDate1.setDate(today.getDate() + 15); // 15 hari mendatang
+    const futureDate2 = new Date(today);
+    futureDate2.setDate(today.getDate() + 45); // 45 hari mendatang
     
     return [
       {
         id: 1,
-        date: `1 Jan - 28 Feb ${currentYear}`,
+        date: `${pastDate1.getDate()} ${getMonthName(pastDate1.getMonth())} ${currentYear} – ${pastDate2.getDate()} ${getMonthName(pastDate2.getMonth())} ${currentYear}`,
         phase: "Pendaftaran Online",
         description: "Pendaftaran dilakukan secara online melalui website resmi Mutiara Al-Madani",
-        status: "active",
+        status: "completed",
         order: 1,
+        isActive: false,
+        isCompleted: true,
+        progress: 100
+      },
+      {
+        id: 2,
+        date: `${today.getDate()} ${getMonthName(today.getMonth())} ${currentYear} – ${futureDate1.getDate()} ${getMonthName(futureDate1.getMonth())} ${currentYear}`,
+        phase: "Tes Masuk & Wawancara",
+        description: "Tes akademik dan wawancara untuk calon siswa dan orang tua",
+        status: "active",
+        order: 2,
         isActive: true,
         isCompleted: false,
         progress: 50
       },
       {
-        id: 2,
-        date: `1 - 15 Maret ${currentYear}`,
-        phase: "Tes Masuk & Wawancara",
-        description: "Tes akademik dan wawancara untuk calon siswa dan orang tua",
-        status: "upcoming",
-        order: 2,
-        isActive: false,
-        isCompleted: false,
-        progress: 0
-      },
-      {
         id: 3,
-        date: `20 Maret ${currentYear}`,
+        date: `${futureDate1.getDate() + 5} ${getMonthName(futureDate1.getMonth())} ${currentYear}`,
         phase: "Pengumuman Hasil",
         description: "Pengumuman hasil seleksi melalui website dan papan pengumuman sekolah",
         status: "upcoming",
@@ -237,7 +503,7 @@ const Info = () => {
       },
       {
         id: 4,
-        date: `21 - 31 Maret ${currentYear}`,
+        date: `${futureDate1.getDate() + 6} ${getMonthName(futureDate1.getMonth())} ${currentYear} – ${futureDate2.getDate()} ${getMonthName(futureDate2.getMonth())} ${currentYear}`,
         phase: "Daftar Ulang",
         description: "Proses daftar ulang bagi calon siswa yang diterima",
         status: "upcoming",
@@ -248,7 +514,7 @@ const Info = () => {
       },
       {
         id: 5,
-        date: `15 Juli ${currentYear}`,
+        date: `15 Juli ${currentYear + 1}`,
         phase: "Awal Tahun Ajaran",
         description: "Hari pertama masuk tahun ajaran baru 2025/2026",
         status: "upcoming",
@@ -812,6 +1078,23 @@ const Info = () => {
               Jadwal lengkap penerimaan peserta didik baru tahun ajaran 2025/2026
             </motion.p>
 
+            {/* Debug Info */}
+            {!loading && !error && (
+              <div className="text-center mb-8">
+                <div className="inline-block bg-gray-100 rounded-lg px-4 py-2 text-sm">
+                  <span className="font-semibold">Hari ini: </span> 
+                  {new Date().toLocaleDateString('id-ID', { 
+                    weekday: 'long', 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                  <span className="mx-2">|</span>
+                  <span className="font-semibold">Total: </span> {timelineData.length} tahap
+                </div>
+              </div>
+            )}
+
             {loading ? (
               <TimelineSkeleton />
             ) : error ? (
@@ -820,9 +1103,10 @@ const Info = () => {
                 <p className="text-gray-600 mb-4">Timeline akan diperbarui ketika koneksi tersedia</p>
                 <button
                   onClick={handleRefreshTimeline}
-                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center mx-auto"
                 >
-                  🔄 Coba Lagi
+                  <span className="mr-2">🔄</span>
+                  Coba Lagi
                 </button>
               </div>
             ) : (
@@ -912,8 +1196,14 @@ const Info = () => {
                   <h3 className="text-xl font-bold mb-2">📢 Informasi Penting</h3>
                   <p className="opacity-90">
                     Pastikan untuk mengikuti setiap tahapan timeline dengan teliti. 
-                    Hubungi kami jika ada pertanyaan melalui WhatsApp: <strong>+62 812-3456-7890</strong>
+                    Hubungi kami jika ada pertanyaan melalui WhatsApp: <strong>+62 853-6826-2156</strong>
                   </p>
+                  <button
+                    onClick={handleRefreshTimeline}
+                    className="mt-4 bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors text-sm"
+                  >
+                    🔄 Refresh Timeline
+                  </button>
                 </motion.div>
               </div>
             )}
