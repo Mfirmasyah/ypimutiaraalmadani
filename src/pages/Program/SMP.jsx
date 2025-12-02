@@ -11,6 +11,7 @@ const SMP = () => {
   const [extracurricularRef, extracurricularVisible] = useScrollAnimation(0.2);
   const [facilitiesRef, facilitiesVisible] = useScrollAnimation(0.2);
   const [izinRef, izinVisible] = useScrollAnimation(0.2);
+  const [akreditasiRef, akreditasiVisible] = useScrollAnimation(0.2);
   
   const [currentSlide, setCurrentSlide] = useState(0);
 
@@ -152,8 +153,7 @@ const SMP = () => {
             >
               Mempersiapkan Siswa Menghadapi <span className="text-yellow-400 font-bold">Tantangan Global</span> 
               {' '}dengan Bekal <span className="text-purple-300 font-bold">Ilmu</span>{' '}
-              <span className="text-purple-300 font-bold"></span>Iman{' '}
-              <span className="text-purple-300 font-bold"></span> dan{' '}
+              <span className="text-purple-300 font-bold">Iman</span> dan{' '}
               <span className="text-indigo-300 font-bold">Akhlak</span>
             </motion.p>
 
@@ -294,7 +294,7 @@ const SMP = () => {
               <div className="space-y-4">
                 {[
                   "Mengembangkan pribadi siswa yang berkarakter, Religius, Cerdas, Disiplin, dan Cinta Tanah air",
-                  "Menetapkan sistem pembelajaran yang Inovatif, Kreatif, Berbasis Iptek dan Peduli Lingkungan",
+                  "Menetapkan sistem pembelajaran yang Inovatif, Kreatif, Berbasis Iptek dan Pedili Lingkungan",
                   "Menanamkan sikap mandiri siswa serta penguasaan Bahasa Arab, Inggris, dan Ibadah-Ibadah Praktis"
                 ].map((mission, index) => (
                   <div key={index} className="flex items-center">
@@ -506,6 +506,194 @@ const SMP = () => {
                   <div className="bg-purple-50 rounded-xl p-4 border border-purple-200">
                     <div className="text-2xl mb-2">⚖️</div>
                     <h5 className="font-bold text-purple-600 text-sm">Legal Formal</h5>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Sertifikat Akreditasi Section */}
+      <section 
+        ref={akreditasiRef}
+        className="py-20 bg-gradient-to-br from-green-50 to-emerald-50"
+      >
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial="initial"
+            animate={akreditasiVisible ? "animate" : "initial"}
+            variants={staggerContainer}
+            className="max-w-4xl mx-auto"
+          >
+            {/* Section Header */}
+            <motion.div 
+              variants={fadeInUp}
+              className="text-center mb-12"
+            >
+              <div className="inline-block bg-white/80 backdrop-blur-sm rounded-full px-6 py-2 border border-green-200 mb-4">
+                <span className="text-green-600 font-semibold text-lg">🏆 AKREDITASI NASIONAL</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
+                Sertifikat Akreditasi
+              </h2>
+              <div className="w-24 h-1 bg-gradient-to-r from-green-400 to-emerald-500 mx-auto mb-4"></div>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Pengakuan kualitas pendidikan dari Badan Akreditasi Nasional
+              </p>
+            </motion.div>
+
+            {/* Sertifikat Akreditasi Card */}
+            <motion.div
+              variants={fadeInUp}
+              className="bg-white rounded-3xl overflow-hidden shadow-2xl border-2 border-green-200 hover:border-green-300 transition-all duration-300"
+            >
+              {/* Header dengan Logo BAN */}
+              <div className="bg-gradient-to-r from-green-600 to-emerald-600 py-6 px-8 text-center">
+                <div className="mb-4">
+                  <h3 className="text-2xl font-bold text-white mb-2">SERTIFIKAT AKREDITASI</h3>
+                  <h4 className="text-xl font-semibold text-green-100">
+                    BADAN AKREDITASI NASIONAL
+                  </h4>
+                  <p className="text-green-100 mt-2">
+                    Pendidikan Anak Usia Dini, Pendidikan Dasar, dan Pendidikan Menengah
+                  </p>
+                </div>
+              </div>
+
+              {/* Body Sertifikat */}
+              <div className="p-8">
+                {/* Nomor Sertifikat */}
+                <div className="text-center mb-8">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200 mb-4">
+                    <p className="text-lg text-gray-600 mb-2">Nomor Sertifikat</p>
+                    <p className="text-2xl font-bold text-green-600">SA00187/15/SMP/2024</p>
+                  </div>
+                  
+                  <div className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+                    <p className="text-lg text-gray-600 mb-2">Keputusan Ketua BAN</p>
+                    <p className="text-xl font-bold text-gray-800">Nomor: 011/BAN-PDM/SK/2025</p>
+                  </div>
+                </div>
+
+                {/* Menyatakan */}
+                <div className="mb-8">
+                  <h4 className="text-xl font-bold text-gray-800 mb-4 text-center">
+                    MENYATAKAN BAHWA:
+                  </h4>
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl p-6 border border-blue-200">
+                    <h5 className="text-2xl font-bold text-center text-gray-800 mb-2">
+                      SMP ISLAM MUTIARA AL-MADANI
+                    </h5>
+                    <p className="text-center text-gray-600 mb-4">(NPSN 70036666)</p>
+                    <p className="text-center text-gray-700 leading-relaxed">
+                      JL. YOS SUDARSO NO. 27 RT. 07 DESA GEDANG, GEDANG, KEC. SUNGAI PENUH,
+                      <br />
+                      KOTA SUNGAI PENUH, JAMBI
+                    </p>
+                  </div>
+                </div>
+
+                {/* Peringkat Akreditasi */}
+                <div className="mb-8 text-center">
+                  <div className="inline-block">
+                    <div className="bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full px-12 py-6 shadow-lg">
+                      <h4 className="text-4xl font-bold text-white">TERAKREDITASI</h4>
+                      <div className="text-7xl font-bold text-white mt-2">A</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Detail Sertifikat */}
+                <div className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <h5 className="font-bold text-gray-800 mb-2">Masa Berlaku</h5>
+                      <p className="text-lg text-gray-700">Sampai dengan 31 Desember 2029</p>
+                    </div>
+                    <div className="bg-gray-50 rounded-xl p-4 border border-gray-200">
+                      <h5 className="font-bold text-gray-800 mb-2">Berdasarkan</h5>
+                      <p className="text-gray-700">Asesmen lapangan atas kinerja satuan pendidikan</p>
+                    </div>
+                  </div>
+
+                  <div className="bg-green-50 rounded-2xl p-6 border border-green-200">
+                    <h5 className="font-bold text-green-800 mb-4">Ditetapkan di Jakarta</h5>
+                    <div className="flex flex-col md:flex-row justify-between items-center">
+                      <div>
+                        <p className="text-gray-700">Pada tanggal 06 Januari 2025</p>
+                      </div>
+                      <div className="mt-4 md:mt-0">
+                        <p className="text-gray-600 mb-2">Ditandatangani secara elektronik oleh:</p>
+                        <p className="font-bold text-green-700">Ketua Badan Akreditasi Nasional</p>
+                        <p className="text-gray-700">Pendidikan Anak Usia Dini, Pendidikan Dasar, dan Pendidikan Menengah</p>
+                        <p className="text-lg font-bold text-gray-800 mt-2">Totok Suprayitno, Ph.D.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Informasi Akreditasi */}
+                <div className="mt-8 bg-blue-50 rounded-2xl p-6 border border-blue-200">
+                  <h4 className="text-xl font-bold text-gray-800 mb-4">📊 Apa Arti Akreditasi A?</h4>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-xl p-4 text-center">
+                      <div className="text-3xl mb-2">🏅</div>
+                      <h5 className="font-bold text-green-600 mb-2">Peringkat Tertinggi</h5>
+                      <p className="text-sm text-gray-600">Akreditasi A menunjukkan kualitas terbaik</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 text-center">
+                      <div className="text-3xl mb-2">✅</div>
+                      <h5 className="font-bold text-green-600 mb-2">Standar Nasional</h5>
+                      <p className="text-sm text-gray-600">Memenuhi 8 Standar Nasional Pendidikan</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4 text-center">
+                      <div className="text-3xl mb-2">📈</div>
+                      <h5 className="font-bold text-green-600 mb-2">Kinerja Unggul</h5>
+                      <p className="text-sm text-gray-600">Proses dan hasil pendidikan berkualitas</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Informasi Tambahan */}
+            <motion.div
+              variants={fadeInUp}
+              className="mt-8 text-center"
+            >
+              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-green-200">
+                <h4 className="text-xl font-bold text-gray-800 mb-4">
+                  🎯 Keunggulan Sekolah Terakreditasi A
+                </h4>
+                <p className="text-gray-700 leading-relaxed mb-4">
+                  Akreditasi A dari BAN membuktikan bahwa SMP Islam Mutiara Al-Madani telah memenuhi 
+                  standar nasional pendidikan dengan predikat sangat baik. Ini mencakup kualitas 
+                  pembelajaran, manajemen sekolah, sarana prasarana, dan kompetensi lulusan.
+                </p>
+                <div className="grid md:grid-cols-2 gap-6 mt-6">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                    <h5 className="font-bold text-green-700 mb-2">✅ Standar yang Terpenuhi:</h5>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Standar Isi dan Proses Pembelajaran</li>
+                      <li>• Standar Kompetensi Lulusan</li>
+                      <li>• Standar Pendidik dan Tenaga Kependidikan</li>
+                      <li>• Standar Sarana Prasarana</li>
+                      <li>• Standar Pengelolaan</li>
+                      <li>• Standar Pembiayaan</li>
+                      <li>• Standar Penilaian Pendidikan</li>
+                    </ul>
+                  </div>
+                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                    <h5 className="font-bold text-blue-700 mb-2">🎓 Manfaat bagi Siswa:</h5>
+                    <ul className="text-sm text-gray-600 space-y-1">
+                      <li>• Pendidikan berkualitas nasional</li>
+                      <li>• Ijazah diakui secara nasional</li>
+                      <li>• Kemudahan melanjutkan ke jenjang lebih tinggi</li>
+                      <li>• Proses belajar mengajar yang terstandar</li>
+                      <li>• Fasilitas pendidikan yang memadai</li>
+                      <li>• Tenaga pengajar berkualitas</li>
+                    </ul>
                   </div>
                 </div>
               </div>
