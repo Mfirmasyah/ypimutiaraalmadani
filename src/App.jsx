@@ -12,6 +12,7 @@ import SD from './pages/Program/SD.jsx';
 import SMP from './pages/Program/SMP.jsx';
 import Info from './pages/SPMB/Info.jsx';
 import Daftar from './pages/SPMB/Daftar.jsx';
+import Konfirmasi from './pages/SPMB/Konfirmasi.jsx';
 import CekStatus from './pages/SPMB/CekStatus.jsx';
 import Achievement from './pages/Achievement.jsx';
 import Edukasi from './pages/Edukasi.jsx';
@@ -40,6 +41,7 @@ function App() {
             <Route path="/program/smp" element={<SMP />} />
             <Route path="/spmb/info" element={<Info />} />
             <Route path="/spmb/daftar" element={<Daftar />} />
+            <Route path="/spmb/konfirmasi" element={<Konfirmasi />} />
             <Route path="/spmb/cek-status" element={<CekStatus />} />
             <Route path="/achievement" element={<Achievement />} />
             <Route path="/edukasi" element={<Edukasi />} />
