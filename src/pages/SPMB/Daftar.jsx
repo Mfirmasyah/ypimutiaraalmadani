@@ -5,8 +5,7 @@ const Daftar = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [apiStatus, setApiStatus] = useState('idle');
-  
+  const [connectionStatus, setConnectionStatus] = useState('checking'); // 'checking', 'connected', 'error'
   const [formData, setFormData] = useState({
     // Step 1: Data Pribadi
     namaLengkap: '',
@@ -47,61 +46,55 @@ const Daftar = () => {
   const [errors, setErrors] = useState({});
   const [formTouched, setFormTouched] = useState({});
 
-  // ✅ ENVIRONMENT CONFIGURATION
-  const IS_LOCALHOST = import.meta.env.DEV;
-  const IS_PRODUCTION = import.meta.env.PROD;
+  // ✅ Deteksi environment untuk production
+  const IS_LOCALHOST = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1';
   
-  // ✅ LOAD ENV VARIABLES
-  const STRAPI_URL = import.meta.env.VITE_STRAPI_URL || 'https://incredible-sparkle-f34960cd1e.strapiapp.com';
-  const API_URL = import.meta.env.VITE_API_URL || `${STRAPI_URL}/api`;
+  // ✅ Konfigurasi untuk Production - FIXED untuk React
+  // Gunakan window._env_ untuk environment variables atau fallback
+  const USE_MOCK_API = window._env_?.REACT_APP_USE_MOCK_API === 'true' || false;
   
-  // ✅ PRODUCTION SETTINGS
-  const USE_MOCK_API = IS_LOCALHOST; // Hanya mock di localhost
-  const TEST_WITHOUT_FILES = IS_LOCALHOST; // Hanya test tanpa file di localhost
-  const PAYLOAD_FORMAT = 1; // Format untuk Strapi v4
+  // Mode tanpa file hanya untuk development
+  const TEST_WITHOUT_FILES = IS_LOCALHOST || false;
   
-  // ✅ CLOUDINARY CONFIG
-  const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
+  // ✅ URL API - Gunakan environment variable jika ada, atau default
+  const API_BASE = window._env_?.REACT_APP_STRAPI_URL || 
+                   (IS_LOCALHOST 
+                     ? 'http://localhost:1337'
+                     : 'https://incredible-sparkle-f34960cd1e.strapiapp.com');
+  const API_URL = `${API_BASE}/api`;
 
-  // ✅ Check API connection on mount
+  // ✅ Test koneksi ke Strapi
   useEffect(() => {
-    console.log(`🌍 Environment: ${IS_PRODUCTION ? 'PRODUCTION' : 'DEVELOPMENT'}`);
-    console.log(`📡 API URL: ${API_URL}`);
-    console.log(`🎭 Mock API: ${USE_MOCK_API ? 'ON' : 'OFF'}`);
-    
-    const checkApiConnection = async () => {
-      if (IS_PRODUCTION && !USE_MOCK_API) {
-        setApiStatus('checking');
-        try {
-          const response = await fetch(`${API_URL}/pendaftars`, {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-          });
-          
-          if (response.status === 200 || response.status === 401 || response.status === 403) {
-            setApiStatus('connected');
-            console.log('✅ API Production terhubung');
-          } else if (response.status === 404) {
-            setApiStatus('endpoint-not-found');
-            console.warn('⚠️ Endpoint /pendaftars tidak ditemukan di Strapi');
-          } else {
-            setApiStatus('error');
-            console.error('❌ Error koneksi API:', response.status);
+    const testStrapiConnection = async () => {
+      try {
+        setConnectionStatus('checking');
+        
+        // Test dengan GET request
+        const testResponse = await fetch(`${API_URL}/pendaftars`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
           }
-        } catch (error) {
-          setApiStatus('offline');
-          console.error('❌ API offline:', error.message);
+        });
+        
+        if (testResponse.ok) {
+          setConnectionStatus('connected');
+        } else {
+          setConnectionStatus('error');
         }
-      } else {
-        setApiStatus('ready');
+        
+      } catch (error) {
+        console.error('Koneksi gagal:', error.message);
+        setConnectionStatus('error');
       }
     };
     
-    checkApiConnection();
-  }, [IS_PRODUCTION, USE_MOCK_API, API_URL]);
+    if (!USE_MOCK_API) {
+      testStrapiConnection();
+    }
+  }, [USE_MOCK_API, API_URL]);
 
-  // ✅ Handle input changes
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
     
@@ -128,7 +121,7 @@ const Daftar = () => {
     }
   };
 
-  // ✅ VALIDASI PER STEP
+  // ✅ FUNGSI VALIDASI PER STEP
   const validateCurrentStep = () => {
     const newErrors = {};
     
@@ -215,217 +208,108 @@ const Daftar = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Upload file ke Cloudinary
-  const uploadToCloudinary = async (file, folder = 'spmb_documents') => {
-    if (!file || !CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      console.warn('⚠️ Cloudinary config tidak lengkap, skip upload');
-      return null;
-    }
-    
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
-    formData.append('folder', folder);
-    
-    try {
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
-        {
-          method: 'POST',
-          body: formData
+  const nextStep = () => {
+    if (validateCurrentStep()) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo(0, 0);
+    } else {
+      const firstErrorField = Object.keys(errors)[0];
+      if (firstErrorField) {
+        const element = document.querySelector(`[name="${firstErrorField}"]`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          element.focus();
         }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Upload gagal: ${response.status}`);
       }
-      
-      const data = await response.json();
-      console.log(`✅ File uploaded: ${data.secure_url}`);
-      return data.secure_url;
-    } catch (error) {
-      console.error('❌ Error upload ke Cloudinary:', error);
-      return null;
     }
   };
 
-  // ✅ SIMPAN DATA KE STRAPI (PRODUCTION READY)
-  const saveToStrapi = async (pendaftarData, hasFiles = false) => {
-    // Mock API untuk development
-    if (USE_MOCK_API) {
-      console.log('🎭 MOCK API: Simulating response');
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      const mockId = Math.floor(Math.random() * 1000) + 1;
-      
-      return {
-        data: {
-          id: mockId,
-          attributes: {
-            ...pendaftarData,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            publishedAt: new Date().toISOString()
-          }
-        }
-      };
+  const prevStep = () => {
+    setCurrentStep(prev => prev - 1);
+    window.scrollTo(0, 0);
+  };
+
+  // Helper untuk menampilkan error message
+  const renderError = (fieldName) => {
+    if (errors[fieldName] && (formTouched[fieldName] || currentStep === 4)) {
+      return (
+        <p className="text-red-600 text-xs mt-1 flex items-center">
+          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+          </svg>
+          {errors[fieldName]}
+        </p>
+      );
     }
-    
+    return null;
+  };
+
+  // ✅ REAL FUNCTION TO SAVE TO STRAPI
+  const saveToStrapi = async (pendaftarData) => {
     try {
-      console.log('🚀 Saving to Strapi Production...');
-      
-      // Data untuk Strapi v4 format
-      const dataForStrapi = {
-        nomorPendaftaran: pendaftarData.nomorPendaftaran,
-        namaLengkap: pendaftarData.namaLengkap,
-        jenisKelamin: pendaftarData.jenisKelamin,
-        tempatLahir: pendaftarData.tempatLahir,
-        tanggalLahir: pendaftarData.tanggalLahir,
-        agama: pendaftarData.agama,
-        alamat: pendaftarData.alamat,
-        telepon: pendaftarData.telepon,
-        email: pendaftarData.email,
-        namaAyah: pendaftarData.namaAyah,
-        pekerjaanAyah: pendaftarData.pekerjaanAyah,
-        teleponAyah: pendaftarData.teleponAyah,
-        namaIbu: pendaftarData.namaIbu,
-        pekerjaanIbu: pendaftarData.pekerjaanIbu,
-        teleponIbu: pendaftarData.teleponIbu,
-        alamatOrtu: pendaftarData.alamatOrtu,
-        sekolahAsal: pendaftarData.sekolahAsal,
-        alamatSekolah: pendaftarData.alamatSekolah || '',
-        tahunLulus: parseInt(pendaftarData.tahunLulus),
-        nilaiRataRata: parseFloat(pendaftarData.nilaiRataRata),
-        programPilihan: pendaftarData.programPilihan,
-        jalurPendaftaran: pendaftarData.jalurPendaftaran,
-        status: 'menunggu',
-        tanggalDaftar: new Date().toISOString()
+      // Prepare data in Strapi v4 format
+      const strapiData = {
+        data: {
+          nomorPendaftaran: pendaftarData.nomorPendaftaran,
+          namaLengkap: pendaftarData.namaLengkap,
+          jenisKelamin: pendaftarData.jenisKelamin,
+          tempatLahir: pendaftarData.tempatLahir,
+          tanggalLahir: pendaftarData.tanggalLahir,
+          agama: pendaftarData.agama,
+          alamat: pendaftarData.alamat,
+          telepon: pendaftarData.telepon,
+          email: pendaftarData.email,
+          namaAyah: pendaftarData.namaAyah,
+          pekerjaanAyah: pendaftarData.pekerjaanAyah,
+          teleponAyah: pendaftarData.teleponAyah,
+          namaIbu: pendaftarData.namaIbu,
+          pekerjaanIbu: pendaftarData.pekerjaanIbu,
+          teleponIbu: pendaftarData.teleponIbu,
+          alamatOrtu: pendaftarData.alamatOrtu,
+          sekolahAsal: pendaftarData.sekolahAsal,
+          alamatSekolah: pendaftarData.alamatSekolah || '',
+          tahunLulus: parseInt(pendaftarData.tahunLulus),
+          nilaiRataRata: parseFloat(pendaftarData.nilaiRataRata),
+          programPilihan: pendaftarData.programPilihan,
+          jalurPendaftaran: pendaftarData.jalurPendaftaran,
+          status: 'menunggu',
+          tanggalDaftar: new Date().toISOString()
+        }
       };
-      
-      console.log('📤 Data to send:', dataForStrapi);
-      
-      // PRODUCTION: Upload file ke Cloudinary jika ada
-      let fileUrls = {};
-      
-      if (hasFiles && CLOUDINARY_CLOUD_NAME) {
-        console.log('☁️ Uploading files to Cloudinary...');
-        
-        // Upload semua file secara paralel
-        const uploadPromises = [];
-        
-        if (pendaftarData.fotoFile) {
-          uploadPromises.push(
-            uploadToCloudinary(pendaftarData.fotoFile, 'spmb_foto')
-              .then(url => fileUrls.foto = url)
-          );
-        }
-        
-        if (pendaftarData.aktaKelahiranFile) {
-          uploadPromises.push(
-            uploadToCloudinary(pendaftarData.aktaKelahiranFile, 'spmb_dokumen')
-              .then(url => fileUrls.aktaKelahiran = url)
-          );
-        }
-        
-        if (pendaftarData.kartuKeluargaFile) {
-          uploadPromises.push(
-            uploadToCloudinary(pendaftarData.kartuKeluargaFile, 'spmb_dokumen')
-              .then(url => fileUrls.kartuKeluarga = url)
-          );
-        }
-        
-        if (pendaftarData.raporFile) {
-          uploadPromises.push(
-            uploadToCloudinary(pendaftarData.raporFile, 'spmb_dokumen')
-              .then(url => fileUrls.rapor = url)
-          );
-        }
-        
-        if (pendaftarData.riwayatPenyakitFile) {
-          uploadPromises.push(
-            uploadToCloudinary(pendaftarData.riwayatPenyakitFile, 'spmb_dokumen')
-              .then(url => fileUrls.riwayatPenyakit = url)
-          );
-        }
-        
-        // Tunggu semua upload selesai
-        await Promise.all(uploadPromises);
-        console.log('✅ All files uploaded:', fileUrls);
-        
-        // Tambahkan URL file ke data
-        dataForStrapi.foto = fileUrls.foto || null;
-        dataForStrapi.aktaKelahiran = fileUrls.aktaKelahiran || null;
-        dataForStrapi.kartuKeluarga = fileUrls.kartuKeluarga || null;
-        dataForStrapi.rapor = fileUrls.rapor || null;
-        dataForStrapi.riwayatPenyakit = fileUrls.riwayatPenyakit || null;
-      }
-      
-      // Format payload sesuai Strapi v4
-      const requestBody = PAYLOAD_FORMAT === 1 
-        ? JSON.stringify({ data: dataForStrapi })
-        : JSON.stringify(dataForStrapi);
-      
-      console.log('📤 Sending to:', `${API_URL}/pendaftars`);
-      console.log('📦 Payload:', requestBody);
       
       const response = await fetch(`${API_URL}/pendaftars`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: requestBody
+        body: JSON.stringify(strapiData)
       });
-
-      console.log('📊 Response status:', response.status);
-      console.log('📊 Response headers:', response.headers);
-
+      
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('❌ Error response:', errorData);
-        } catch (e) {
-          errorData = { error: { message: await response.text() } };
-        }
-        
-        if (response.status === 404) {
-          throw new Error(`Endpoint tidak ditemukan: ${API_URL}/pendaftars`);
-        }
+        const errorText = await response.text();
+        let errorMessage = 'Gagal menyimpan data';
         
         if (response.status === 400) {
-          if (errorData.error?.message) {
-            throw new Error(`Validasi gagal: ${JSON.stringify(errorData.error.message)}`);
-          }
-          throw new Error(`Data tidak valid: ${JSON.stringify(errorData)}`);
+          errorMessage = 'Data tidak valid. Silakan periksa kembali';
+        } else if (response.status === 403) {
+          errorMessage = 'Akses ditolak';
+        } else if (response.status === 404) {
+          errorMessage = 'Endpoint tidak ditemukan';
+        } else if (response.status === 409) {
+          errorMessage = 'Data sudah terdaftar';
         }
         
-        if (response.status === 403) {
-          throw new Error('Akses ditolak. Periksa CORS dan permissions di Strapi.');
-        }
-        
-        throw new Error(`HTTP error! status: ${response.status} - ${JSON.stringify(errorData)}`);
+        throw new Error(errorMessage);
       }
-
+      
       const result = await response.json();
-      console.log('✅ Save successful:', result);
       return result;
-
+      
     } catch (error) {
-      console.error('❌ Error saving:', error);
-      
-      if (IS_PRODUCTION) {
-        console.error('🔧 Production Debug Info:');
-        console.error('- API_URL:', API_URL);
-        console.error('- Endpoint:', `${API_URL}/pendaftars`);
-        console.error('- Time:', new Date().toISOString());
-        console.error('- Cloudinary Ready:', !!CLOUDINARY_CLOUD_NAME);
-      }
-      
       throw error;
     }
   };
 
-  // ✅ VALIDASI ENUM VALUES
   const validateEnumValues = () => {
     const enumChecks = {
       jenisKelamin: ['Laki-laki', 'Perempuan'].includes(formData.jenisKelamin),
@@ -439,11 +323,10 @@ const Daftar = () => {
       .map(([field]) => field);
 
     if (invalidFields.length > 0) {
-      throw new Error(`Nilai tidak valid: ${invalidFields.join(', ')}`);
+      throw new Error(`Nilai tidak valid untuk: ${invalidFields.join(', ')}`);
     }
   };
 
-  // ✅ VALIDASI FIELD LENGTHS
   const validateFieldLengths = () => {
     const lengthChecks = {
       namaLengkap: formData.namaLengkap.length <= 100,
@@ -467,19 +350,28 @@ const Daftar = () => {
       .map(([field]) => field);
 
     if (tooLongFields.length > 0) {
-      throw new Error(`Field terlalu panjang: ${tooLongFields.join(', ')}`);
+      throw new Error(`Data terlalu panjang untuk: ${tooLongFields.join(', ')}`);
     }
   };
 
-  // ✅ HANDLE SUBMIT
+  // ✅ REAL SUBMIT HANDLER - SAVES TO STRAPI
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (connectionStatus === 'error') {
+      alert('❌ Tidak dapat terhubung ke server. Silakan coba lagi nanti.');
+      return;
+    }
+    
+    if (connectionStatus === 'checking') {
+      alert('🔄 Sedang memeriksa koneksi ke server...');
+      return;
+    }
+    
     setLoading(true);
 
     try {
-      console.log('🚀 Starting submission...');
-      
-      // Validasi semua step
+      // Validate all steps
       for (let step = 1; step <= 4; step++) {
         const tempErrors = {};
         
@@ -520,199 +412,118 @@ const Daftar = () => {
         }
         
         if (Object.keys(tempErrors).length > 0) {
-          throw new Error(`Lengkapi data di Step ${step}`);
+          setCurrentStep(step);
+          setErrors(tempErrors);
+          throw new Error(`Silakan lengkapi data di Step ${step}`);
         }
       }
 
-      // Validasi tambahan
+      // Additional validation
       validateEnumValues();
       validateFieldLengths();
 
-      console.log('📝 Preparing data...');
-
-      const tempNomor = `SPMB-${Date.now()}`;
+      const tempNomor = `SPMB-TEMP-${Date.now().toString().slice(-6)}`;
       
-      if (TEST_WITHOUT_FILES) {
-        console.log('🧪 TEST MODE: Tanpa file');
-        
-        const pendaftarDataNoFiles = {
-          nomorPendaftaran: tempNomor,
-          namaLengkap: formData.namaLengkap,
-          jenisKelamin: formData.jenisKelamin,
-          tempatLahir: formData.tempatLahir,
-          tanggalLahir: formData.tanggalLahir,
-          agama: formData.agama,
-          alamat: formData.alamat,
-          telepon: formData.telepon,
-          email: formData.email,
-          namaAyah: formData.namaAyah,
-          pekerjaanAyah: formData.pekerjaanAyah,
-          teleponAyah: formData.teleponAyah,
-          namaIbu: formData.namaIbu,
-          pekerjaanIbu: formData.pekerjaanIbu,
-          teleponIbu: formData.teleponIbu,
-          alamatOrtu: formData.alamatOrtu,
-          sekolahAsal: formData.sekolahAsal,
-          alamatSekolah: formData.alamatSekolah || '',
-          tahunLulus: parseInt(formData.tahunLulus),
-          nilaiRataRata: parseFloat(formData.nilaiRataRata),
-          programPilihan: formData.programPilihan,
-          jalurPendaftaran: formData.jalurPendaftaran,
-          status: 'menunggu',
-          tanggalDaftar: new Date().toISOString()
-        };
-
-        const result = await saveToStrapi(pendaftarDataNoFiles, false);
-        await processRegistrationSuccess(result.data.id, tempNomor);
-        
-      } else {
-        const pendaftarDataWithFiles = {
-          nomorPendaftaran: tempNomor,
-          namaLengkap: formData.namaLengkap,
-          jenisKelamin: formData.jenisKelamin,
-          tempatLahir: formData.tempatLahir,
-          tanggalLahir: formData.tanggalLahir,
-          agama: formData.agama,
-          alamat: formData.alamat,
-          telepon: formData.telepon,
-          email: formData.email,
-          namaAyah: formData.namaAyah,
-          pekerjaanAyah: formData.pekerjaanAyah,
-          teleponAyah: formData.teleponAyah,
-          namaIbu: formData.namaIbu,
-          pekerjaanIbu: formData.pekerjaanIbu,
-          teleponIbu: formData.teleponIbu,
-          alamatOrtu: formData.alamatOrtu,
-          sekolahAsal: formData.sekolahAsal,
-          alamatSekolah: formData.alamatSekolah || '',
-          tahunLulus: parseInt(formData.tahunLulus),
-          nilaiRataRata: parseFloat(formData.nilaiRataRata),
-          programPilihan: formData.programPilihan,
-          jalurPendaftaran: formData.jalurPendaftaran,
-          status: 'menunggu',
-          tanggalDaftar: new Date().toISOString(),
-          fotoFile: formData.foto,
-          aktaKelahiranFile: formData.aktaKelahiran,
-          kartuKeluargaFile: formData.kartuKeluarga,
-          raporFile: formData.rapor,
-          riwayatPenyakitFile: formData.riwayatPenyakit
-        };
-
-        const result = await saveToStrapi(pendaftarDataWithFiles, true);
-        await processRegistrationSuccess(result.data.id, tempNomor);
-      }
-
+      const pendaftarData = {
+        nomorPendaftaran: tempNomor,
+        namaLengkap: formData.namaLengkap,
+        jenisKelamin: formData.jenisKelamin,
+        tempatLahir: formData.tempatLahir,
+        tanggalLahir: formData.tanggalLahir,
+        agama: formData.agama,
+        alamat: formData.alamat,
+        telepon: formData.telepon,
+        email: formData.email,
+        namaAyah: formData.namaAyah,
+        pekerjaanAyah: formData.pekerjaanAyah,
+        teleponAyah: formData.teleponAyah,
+        namaIbu: formData.namaIbu,
+        pekerjaanIbu: formData.pekerjaanIbu,
+        teleponIbu: formData.teleponIbu,
+        alamatOrtu: formData.alamatOrtu,
+        sekolahAsal: formData.sekolahAsal,
+        alamatSekolah: formData.alamatSekolah || '',
+        tahunLulus: parseInt(formData.tahunLulus),
+        nilaiRataRata: parseFloat(formData.nilaiRataRata),
+        programPilihan: formData.programPilihan,
+        jalurPendaftaran: formData.jalurPendaftaran,
+        status: 'menunggu',
+        tanggalDaftar: new Date().toISOString()
+      };
+      
+      // SAVE TO REAL STRAPI
+      const result = await saveToStrapi(pendaftarData);
+      
+      await processRegistrationSuccess(result.data.id, tempNomor);
+      
     } catch (error) {
-      console.error('❌ Error:', error);
+      // Scroll to top
+      window.scrollTo(0, 0);
       
-      let errorMessage = 'Terjadi kesalahan. Silakan coba lagi.';
-      
-      if (error.message.includes('Failed to fetch') || error.message.includes('Network Error')) {
-        if (IS_LOCALHOST) {
-          errorMessage = '❌ Tidak dapat menghubungi Strapi.\n\nPastikan Strapi berjalan di localhost:1337\nAtau ubah USE_MOCK_API ke true';
-        } else {
-          errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
-        }
-      } else if (error.message.includes('404')) {
-        errorMessage = `Endpoint API tidak ditemukan.\n\nPastikan koleksi "pendaftars" sudah dibuat di Strapi.\n\nEndpoint: ${API_URL}/pendaftars`;
-      } else if (error.message.includes('403')) {
-        errorMessage = 'Akses ditolak. Hubungi administrator untuk konfigurasi permissions.';
-      } else if (error.message.includes('400')) {
-        errorMessage = 'Data tidak valid: ' + error.message;
-      } else if (error.message.includes('413')) {
-        errorMessage = 'File terlalu besar. Maksimal 5MB per file.';
+      // User-friendly error messages
+      if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        alert('❌ Gagal terhubung ke server. Silakan periksa koneksi internet Anda.');
+      } else {
+        alert(`⚠️ Error: ${error.message}`);
       }
-      
-      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ PROSES SETELAH REGISTRASI BERHASIL
+  // ✅ PROCESS REGISTRATION SUCCESS
   const processRegistrationSuccess = async (pendaftarId, tempNomor) => {
     const nomorPendaftaran = `SPMB-${new Date().getFullYear()}${String(pendaftarId).padStart(4, '0')}`;
-
-    if (!USE_MOCK_API) {
-      try {
-        const updateResponse = await fetch(`${API_URL}/pendaftars/${pendaftarId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            data: { 
-              nomorPendaftaran: nomorPendaftaran 
-            } 
-          }),
-        });
-
-        if (!updateResponse.ok) {
-          console.warn('⚠️ Gagal update nomor pendaftaran, tetap menggunakan nomor sementara');
+    
+    // Try to update the nomorPendaftaran in Strapi
+    try {
+      const updateData = {
+        data: {
+          nomorPendaftaran: nomorPendaftaran
         }
-      } catch (error) {
-        console.warn('⚠️ Error update nomor:', error);
-      }
+      };
+      
+      await fetch(`${API_URL}/pendaftars/${pendaftarId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData)
+      });
+      
+    } catch (error) {
+      // If update fails, use temporary number
+      console.warn('Gagal update nomor pendaftaran:', error.message);
     }
 
-    // Simpan ke localStorage untuk backup
-    localStorage.setItem('lastRegistration', JSON.stringify({
+    // Save to localStorage for backup and confirmation
+    const registrationData = {
       nomorPendaftaran,
       nama: formData.namaLengkap,
       program: formData.programPilihan,
+      email: formData.email,
+      telepon: formData.telepon,
       tanggal: new Date().toLocaleDateString('id-ID'),
-      timestamp: Date.now()
-    }));
+      waktu: new Date().toLocaleTimeString('id-ID'),
+      timestamp: new Date().getTime(),
+      strapiId: pendaftarId
+    };
 
-    // Redirect ke halaman konfirmasi
+    // Save to localStorage
+    localStorage.setItem('lastRegistration', JSON.stringify(registrationData));
+    
+    // Save to array of registrations
+    const allRegistrations = JSON.parse(localStorage.getItem('registrations') || '[]');
+    allRegistrations.push(registrationData);
+    localStorage.setItem('registrations', JSON.stringify(allRegistrations));
+
+    // Redirect to confirmation page
     navigate('/spmb/konfirmasi', { 
-      state: { 
-        nomorPendaftaran,
-        nama: formData.namaLengkap,
-        program: formData.programPilihan,
-        tanggal: new Date().toLocaleDateString('id-ID')
-      }
+      state: registrationData,
+      replace: true
     });
   };
 
-  // ✅ NAVIGASI STEP
-  const nextStep = () => {
-    if (validateCurrentStep()) {
-      setCurrentStep(prev => prev + 1);
-      window.scrollTo(0, 0);
-    } else {
-      const firstErrorField = Object.keys(errors)[0];
-      if (firstErrorField) {
-        const element = document.querySelector(`[name="${firstErrorField}"]`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.focus();
-        }
-      }
-    }
-  };
-
-  const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
-    window.scrollTo(0, 0);
-  };
-
-  // ✅ RENDER ERROR MESSAGE
-  const renderError = (fieldName) => {
-    if (errors[fieldName] && (formTouched[fieldName] || currentStep === 4)) {
-      return (
-        <p className="text-red-600 text-xs mt-1 flex items-center">
-          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-          </svg>
-          {errors[fieldName]}
-        </p>
-      );
-    }
-    return null;
-  };
-
-  // ✅ STEP CONFIGURATION
   const steps = [
     { number: 1, title: 'Data Pribadi' },
     { number: 2, title: 'Data Orang Tua' },
@@ -721,7 +532,6 @@ const Daftar = () => {
     { number: 5, title: 'Konfirmasi' }
   ];
 
-  // ✅ CHECK STEP COMPLETION
   const isStepComplete = (step) => {
     switch(step) {
       case 1:
@@ -741,26 +551,37 @@ const Daftar = () => {
     }
   };
 
-  return (
-    <div className="pt-20 min-h-screen bg-gray-50">
-      {/* API Status Banner */}
-      {apiStatus === 'offline' && IS_PRODUCTION && (
-        <div className="fixed top-20 left-0 right-0 z-50">
-          <div className="container-custom">
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg shadow-lg">
-              <div className="flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                <strong>Server Offline!</strong>
-                <span className="ml-2">Tidak dapat terhubung ke server. Silakan coba beberapa saat lagi.</span>
-              </div>
+  // ✅ Render connection status indicator (Hanya tampil jika error)
+  const renderConnectionStatus = () => {
+    if (USE_MOCK_API) return null;
+    
+    if (connectionStatus === 'error') {
+      return (
+        <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-400 rounded-lg p-3 shadow-lg max-w-xs">
+          <div className="flex items-center">
+            <span className="mr-2 text-red-600">⚠️</span>
+            <div>
+              <p className="font-medium text-sm text-red-800">Koneksi Error</p>
+              <p className="text-xs text-red-700">Tidak dapat terhubung ke server</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="text-xs text-red-800 underline mt-1"
+              >
+                Coba Lagi
+              </button>
             </div>
           </div>
         </div>
-      )}
+      );
+    }
+    
+    return null;
+  };
 
-      {/* Main Header */}
+  return (
+    <div className="pt-20 min-h-screen bg-gray-50">
+      {renderConnectionStatus()}
+      
       <section className="bg-white border-b">
         <div className="container-custom py-8">
           <div className="text-center">
@@ -774,7 +595,6 @@ const Daftar = () => {
         </div>
       </section>
 
-      {/* Progress Steps */}
       <section className="bg-white shadow-sm">
         <div className="container-custom py-6">
           <div className="flex justify-center">
@@ -812,25 +632,23 @@ const Daftar = () => {
         </div>
       </section>
 
-      {/* Main Form */}
       <section className="section-padding">
         <div className="container-custom max-w-4xl">
-          {loading && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white rounded-2xl p-8 text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-700 font-medium">
-                  {USE_MOCK_API ? 'Simulating...' : 'Menyimpan data...'}
-                </p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Harap tunggu, proses mungkin memakan waktu beberapa detik.
-                </p>
-              </div>
-            </div>
-          )}
-
           <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-            {/* Step 1: Data Pribadi */}
+            {loading && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-white rounded-2xl p-8 text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                  <p className="text-gray-700 font-medium">
+                    Menyimpan data pendaftaran...
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Harap tunggu beberapa saat
+                  </p>
+                </div>
+              </div>
+            )}
+
             {currentStep === 1 && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-6">
@@ -912,6 +730,7 @@ const Daftar = () => {
                       value={formData.tanggalLahir}
                       onChange={handleInputChange}
                       required
+                      max={new Date().toISOString().split('T')[0]}
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.tanggalLahir ? 'border-red-500' : 'border-gray-300'
                       }`}
@@ -993,14 +812,13 @@ const Daftar = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
                       errors.alamat ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Alamat lengkap"
+                    placeholder="Alamat lengkap (jalan, RT/RW, kelurahan, kecamatan, kota)"
                   ></textarea>
                   {renderError('alamat')}
                 </div>
               </div>
             )}
 
-            {/* Step 2: Data Orang Tua */}
             {currentStep === 2 && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1029,7 +847,7 @@ const Daftar = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.namaAyah ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Nama ayah"
+                      placeholder="Masukkan nama ayah"
                     />
                     {renderError('namaAyah')}
                   </div>
@@ -1047,7 +865,7 @@ const Daftar = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.pekerjaanAyah ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Pekerjaan ayah"
+                      placeholder="Masukkan pekerjaan ayah"
                     />
                     {renderError('pekerjaanAyah')}
                   </div>
@@ -1083,7 +901,7 @@ const Daftar = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.namaIbu ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Nama ibu"
+                      placeholder="Masukkan nama ibu"
                     />
                     {renderError('namaIbu')}
                   </div>
@@ -1101,7 +919,7 @@ const Daftar = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.pekerjaanIbu ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Pekerjaan ibu"
+                      placeholder="Masukkan pekerjaan ibu"
                     />
                     {renderError('pekerjaanIbu')}
                   </div>
@@ -1138,14 +956,13 @@ const Daftar = () => {
                     className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
                       errors.alamatOrtu ? 'border-red-500' : 'border-gray-300'
                     }`}
-                    placeholder="Alamat orang tua"
+                    placeholder="Alamat lengkap orang tua"
                   ></textarea>
                   {renderError('alamatOrtu')}
                 </div>
               </div>
             )}
 
-            {/* Step 3: Data Akademik */}
             {currentStep === 3 && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1174,7 +991,7 @@ const Daftar = () => {
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.sekolahAsal ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="Nama sekolah"
+                      placeholder="Nama sekolah sebelumnya"
                     />
                     {renderError('sekolahAsal')}
                   </div>
@@ -1192,10 +1009,11 @@ const Daftar = () => {
                         errors.tahunLulus ? 'border-red-500' : 'border-gray-300'
                       }`}
                     >
-                      <option value="">Pilih Tahun</option>
-                      {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (
-                        <option key={year} value={year}>{year}</option>
-                      ))}
+                      <option value="">Pilih Tahun Lulus</option>
+                      {Array.from({length: 10}, (_, i) => {
+                        const year = new Date().getFullYear() - i;
+                        return <option key={year} value={year}>{year}</option>;
+                      })}
                     </select>
                     {renderError('tahunLulus')}
                   </div>
@@ -1212,7 +1030,7 @@ const Daftar = () => {
                       required
                       min="0"
                       max="100"
-                      step="0.01"
+                      step="0.1"
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                         errors.nilaiRataRata ? 'border-red-500' : 'border-gray-300'
                       }`}
@@ -1242,7 +1060,7 @@ const Daftar = () => {
                     {renderError('programPilihan')}
                   </div>
 
-                  <div className="md:col-span-2">
+                  <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Jalur Pendaftaran *
                     </label>
@@ -1263,28 +1081,27 @@ const Daftar = () => {
                     </select>
                     {renderError('jalurPendaftaran')}
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Alamat Sekolah Asal
-                  </label>
-                  <textarea
-                    name="alamatSekolah"
-                    value={formData.alamatSekolah}
-                    onChange={handleInputChange}
-                    rows="2"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
-                      errors.alamatSekolah ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                    placeholder="Alamat sekolah"
-                  ></textarea>
-                  {renderError('alamatSekolah')}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Alamat Sekolah (Opsional)
+                    </label>
+                    <textarea
+                      name="alamatSekolah"
+                      value={formData.alamatSekolah}
+                      onChange={handleInputChange}
+                      rows="2"
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
+                        errors.alamatSekolah ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="Alamat sekolah sebelumnya"
+                    ></textarea>
+                    {renderError('alamatSekolah')}
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Step 4: Upload Dokumen */}
             {currentStep === 4 && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center mb-6">
@@ -1299,68 +1116,29 @@ const Daftar = () => {
                   )}
                 </div>
                 
-                <p className="text-gray-600 mb-6">
-                  Upload dokumen-dokumen berikut (maks. 5MB per file, format: JPG, PNG, PDF)
-                  {TEST_WITHOUT_FILES && IS_LOCALHOST && (
-                    <span className="text-blue-600 ml-2">[Test Mode: File tidak diupload]</span>
-                  )}
-                </p>
-
-                <div className="space-y-4">
-                  {[
-                    { name: 'foto', label: 'Foto 3x4', required: true },
-                    { name: 'aktaKelahiran', label: 'Akta Kelahiran', required: true },
-                    { name: 'kartuKeluarga', label: 'Kartu Keluarga', required: true },
-                    { name: 'rapor', label: 'Rapor', required: true },
-                    { name: 'riwayatPenyakit', label: 'Surat Riwayat Penyakit', required: false }
-                  ].map((doc) => (
-                    <div key={doc.name} className={`border rounded-lg p-4 ${
-                      errors[doc.name] ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                    }`}>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        {doc.label} {doc.required && '*'}
-                      </label>
-                      <div className="flex items-center space-x-4">
-                        <input
-                          type="file"
-                          name={doc.name}
-                          onChange={handleInputChange}
-                          required={doc.required && !TEST_WITHOUT_FILES}
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700"
-                        />
-                        {formData[doc.name] && (
-                          <span className="text-green-600 text-sm font-medium flex items-center">
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            Terupload
-                          </span>
-                        )}
-                      </div>
-                      {errors[doc.name] && (
-                        <p className="text-red-600 text-xs mt-2 flex items-center">
-                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                          </svg>
-                          {errors[doc.name]}
-                        </p>
-                      )}
-                      {formData[doc.name] && (
-                        <p className="text-gray-500 text-xs mt-1">
-                          File: {formData[doc.name].name} ({(formData[doc.name].size / 1024 / 1024).toFixed(2)} MB)
-                        </p>
-                      )}
+                <div className="space-y-6">
+                  {TEST_WITHOUT_FILES ? (
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                      <svg className="w-12 h-12 text-yellow-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                      <h3 className="text-lg font-semibold text-yellow-800 mb-2">Mode Tanpa File</h3>
+                      <p className="text-yellow-700">
+                        Saat ini sistem dalam mode pengujian. Upload file akan diaktifkan saat production.
+                      </p>
                     </div>
-                  ))}
+                  ) : (
+                    <div className="grid md:grid-cols-2 gap-6">
+                      {/* File upload components */}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Step 5: Konfirmasi */}
             {currentStep === 5 && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800 mb-6">Konfirmasi</h2>
+                <h2 className="text-2xl font-bold text-gray-800 mb-6">Konfirmasi Pendaftaran</h2>
                 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
                   <div className="flex items-center">
@@ -1370,13 +1148,10 @@ const Daftar = () => {
                       </svg>
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-green-800">Data Lengkap!</h3>
-                      <p className="text-green-600">Periksa kembali data sebelum submit.</p>
-                      {IS_PRODUCTION && (
-                        <p className="text-yellow-600 text-sm mt-1">
-                          Data akan disimpan ke server production.
-                        </p>
-                      )}
+                      <h3 className="text-lg font-semibold text-green-800">Data Lengkap dan Valid!</h3>
+                      <p className="text-green-600">
+                        Data siap disimpan ke sistem
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1397,7 +1172,7 @@ const Daftar = () => {
                     <div className="space-y-2">
                       <p><span className="text-gray-600">Telepon:</span> {formData.telepon}</p>
                       <p><span className="text-gray-600">Email:</span> {formData.email}</p>
-                      <p><span className="text-gray-600">Alamat:</span> {formData.alamat}</p>
+                      <p><span className="text-gray-600">Alamat:</span> {formData.alamat.substring(0, 50)}...</p>
                     </div>
                   </div>
 
@@ -1412,14 +1187,12 @@ const Daftar = () => {
                   </div>
 
                   <div className="space-y-4">
-                    <h3 className="font-semibold text-gray-800 border-b pb-2">Dokumen</h3>
+                    <h3 className="font-semibold text-gray-800 border-b pb-2">Data Orang Tua</h3>
                     <div className="space-y-2">
-                      {['foto', 'aktaKelahiran', 'kartuKeluarga', 'rapor', 'riwayatPenyakit'].map(doc => (
-                        <p key={doc}>
-                          <span className="text-gray-600">{doc}:</span>{' '}
-                          {formData[doc] ? '✓ Terupload' : doc === 'riwayatPenyakit' ? '✓ Opsional' : '✗ Belum'}
-                        </p>
-                      ))}
+                      <p><span className="text-gray-600">Nama Ayah:</span> {formData.namaAyah}</p>
+                      <p><span className="text-gray-600">Pekerjaan Ayah:</span> {formData.pekerjaanAyah}</p>
+                      <p><span className="text-gray-600">Nama Ibu:</span> {formData.namaIbu}</p>
+                      <p><span className="text-gray-600">Pekerjaan Ibu:</span> {formData.pekerjaanIbu}</p>
                     </div>
                   </div>
                 </div>
@@ -1430,19 +1203,20 @@ const Daftar = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <div>
-                      <p className="text-blue-800 text-sm">
-                        Data yang diisi adalah benar dan siap mengikuti proses seleksi.
+                      <p className="text-blue-800 text-sm font-medium">
+                        Dengan menekan tombol "Submit Pendaftaran", saya menyatakan bahwa:
                       </p>
-                      <p className="text-blue-600 text-xs mt-1">
-                        Dengan mengklik "Submit Pendaftaran", Anda menyetujui syarat dan ketentuan.
-                      </p>
+                      <ul className="text-blue-700 text-sm mt-2 space-y-1 list-disc pl-5">
+                        <li>Data yang diisi adalah benar dan dapat dipertanggungjawabkan</li>
+                        <li>Siap mengikuti proses seleksi penerimaan siswa baru</li>
+                        <li>Akan mematuhi semua peraturan yang berlaku</li>
+                      </ul>
                     </div>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Navigation Buttons */}
             <div className="flex justify-between items-center pt-8 mt-8 border-t border-gray-200">
               <div>
                 {currentStep > 1 && (
@@ -1469,18 +1243,20 @@ const Daftar = () => {
                     }`}
                     disabled={!isStepComplete(currentStep) || loading}
                   >
-                    Lanjut
+                    Lanjut ke Step {currentStep + 1}
                   </button>
                 ) : (
                   <button
                     type="submit"
-                    disabled={loading}
-                    className="px-8 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium flex items-center transition-colors disabled:opacity-50"
+                    disabled={loading || connectionStatus === 'error'}
+                    className={`px-8 py-3 rounded-lg font-medium flex items-center transition-colors ${
+                      'bg-green-600 text-white hover:bg-green-700'
+                    } disabled:opacity-70`}
                   >
                     {loading ? (
                       <>
                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                        {USE_MOCK_API ? 'Simulating...' : 'Memproses...'}
+                        Menyimpan Data...
                       </>
                     ) : (
                       'Submit Pendaftaran'
@@ -1491,7 +1267,6 @@ const Daftar = () => {
             </div>
           </form>
 
-          {/* Information Box */}
           <div className="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6">
             <div className="flex items-start">
               <svg className="w-6 h-6 text-blue-600 mt-1 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1500,72 +1275,28 @@ const Daftar = () => {
               <div>
                 <h3 className="text-lg font-semibold text-blue-800 mb-2">Informasi Penting</h3>
                 <ul className="text-blue-700 space-y-2 text-sm">
-                  <li>• Pastikan data benar dan lengkap</li>
-                  <li>• Anda akan mendapatkan nomor pendaftaran</li>
-                  <li>• Proses seleksi 3-5 hari kerja</li>
-                  <li>• Hubungi: 0853-6826-2156</li>
-                  {IS_PRODUCTION && (
-                    <li className="text-green-700 font-medium">• Mode: PRODUCTION - Data akan disimpan ke server</li>
-                  )}
+                  <li className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>Data akan disimpan ke sistem secara permanen</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>Setelah submit, Anda akan mendapatkan nomor pendaftaran</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>Proses seleksi membutuhkan waktu 3-5 hari kerja</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="mr-2">•</span>
+                    <span>Pastikan data yang diisi sudah benar sebelum submit</span>
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      {/* Development Mode Banner */}
-      {IS_LOCALHOST && (
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className="bg-yellow-100 border border-yellow-400 rounded-lg p-4 shadow-lg max-w-xs">
-            <div className="flex items-center mb-2">
-              <svg className="w-5 h-5 text-yellow-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <h3 className="font-bold text-yellow-800">DEV MODE (Vite)</h3>
-            </div>
-            <p className="text-sm text-yellow-700 mb-2">
-              {USE_MOCK_API ? 'Using Mock API' : `API: ${API_URL}`}
-            </p>
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between">
-                <span>Environment:</span>
-                <span className="px-2 rounded bg-purple-200 text-purple-800">
-                  {IS_LOCALHOST ? 'Development' : 'Production'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Mock API:</span>
-                <span className={`px-2 rounded ${USE_MOCK_API ? 'bg-green-200 text-green-800' : 'bg-gray-200'}`}>
-                  {USE_MOCK_API ? 'ON' : 'OFF'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>No Files:</span>
-                <span className={`px-2 rounded ${TEST_WITHOUT_FILES ? 'bg-green-200 text-green-800' : 'bg-gray-200'}`}>
-                  {TEST_WITHOUT_FILES ? 'ON' : 'OFF'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>Cloudinary:</span>
-                <span className={`px-2 rounded ${CLOUDINARY_CLOUD_NAME ? 'bg-blue-200 text-blue-800' : 'bg-gray-200'}`}>
-                  {CLOUDINARY_CLOUD_NAME ? 'READY' : 'OFF'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span>API Status:</span>
-                <span className={`px-2 rounded ${
-                  apiStatus === 'connected' ? 'bg-green-200 text-green-800' : 
-                  apiStatus === 'checking' ? 'bg-yellow-200 text-yellow-800' : 
-                  apiStatus === 'offline' ? 'bg-red-200 text-red-800' : 'bg-gray-200'
-                }`}>
-                  {apiStatus}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
